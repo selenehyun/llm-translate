@@ -1,0 +1,71 @@
+{
+  "name": "llm-translate",
+  "version": "0.1.0",
+  "description": "CLI-based document translation tool powered by LLMs with glossary enforcement and quality-aware refinement",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "llm-translate": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node ./dist/cli/index.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "translation",
+    "llm",
+    "cli",
+    "markdown",
+    "glossary",
+    "ai",
+    "claude",
+    "openai"
+  ],
+  "author": "Tim Kang",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "ai": "^4.0.0",
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
+    "commander": "^12.1.0",
+    "unified": "^11.0.5",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "remark-gfm": "^4.0.0",
+    "unist-util-visit": "^5.0.0",
+    "cheerio": "^1.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.1.0",
+    "cosmiconfig": "^9.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22.10.1",
+    "typescript": "^5.7.2",
+    "tsup": "^8.3.5",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^9.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "name": "ML/AI Glossary",
+    "sourceLang": "en",
+    "targetLangs": ["ko", "ja", "zh-CN"],
+    "version": "1.0.0",
+    "domain": "machine-learning"
+  },
+  "terms": [
+    {
+      "source": "machine learning",
+      "targets": {
+        "ko": "머신러닝",
+        "ja": "機械学習",
+        "zh-CN": "机器学习"
+      }
+    },
+    {
+      "source": "artificial intelligence",
+      "targets": {
+        "ko": "인공지능",
+        "ja": "人工知能",
+        "zh-CN": "人工智能"
+      }
+    },
+    {
+      "source": "neural network",
+      "targets": {
+        "ko": "신경망",
+        "ja": "ニューラルネットワーク",
+        "zh-CN": "神经网络"
+      }
+    },
+    {
+      "source": "deep learning",
+      "targets": {
+        "ko": "딥러닝",
+        "ja": "ディープラーニング",
+        "zh-CN": "深度学习"
+      }
+    },
+    {
+      "source": "API",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "SDK",
+      "targets": {},
+      "doNotTranslate": true
+    }
+  ]
+}

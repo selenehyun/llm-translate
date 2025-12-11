@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "Example Project",
+    "description": "Example project configuration for llm-translate",
+    "purpose": "Technical documentation translation"
+  },
+  "languages": {
+    "source": "en",
+    "targets": ["ko", "ja", "zh-CN"]
+  },
+  "provider": {
+    "default": "claude",
+    "model": "claude-sonnet-4-20250514",
+    "fallback": ["openai"]
+  },
+  "quality": {
+    "threshold": 85,
+    "maxIterations": 4,
+    "evaluationMethod": "llm"
+  },
+  "chunking": {
+    "maxTokens": 1024,
+    "overlapTokens": 150,
+    "preserveStructure": true
+  },
+  "glossary": {
+    "path": "./glossary.json",
+    "strict": false
+  },
+  "paths": {
+    "output": "./docs/{lang}",
+    "cache": "./.translate-cache"
+  },
+  "ignore": [
+    "**/node_modules/**",
+    "**/*.test.md",
+    "**/drafts/**"
+  ]
+}
