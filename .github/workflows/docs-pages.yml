@@ -41,6 +41,7 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+        continue-on-error: true # skip failure if repo doesn't allow auto-enablement; enable Pages manually in settings
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
