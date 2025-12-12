@@ -59,7 +59,7 @@ const locales = generateLocaleConfig(docsDir, {
 // Shared configuration
 const shared = defineConfig({
   title: 'llm-translate',
-  base: '/',
+  base: '/llm-translate/',
   head: [['link', { rel: 'icon', href: '/favicon.ico' }]],
 
   themeConfig: {
