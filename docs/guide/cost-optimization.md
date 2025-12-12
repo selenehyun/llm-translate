@@ -4,7 +4,7 @@ This guide covers strategies to minimize API costs while maintaining translation
 
 ## Cost Structure
 
-### Token Pricing (as of 2024)
+### Token Pricing (as of 2025)
 
 | Model | Input (1K) | Output (1K) | Cache Read | Cache Write |
 |-------|-----------|-------------|------------|-------------|

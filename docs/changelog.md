@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ChatResponse.usage` includes cache token metrics
 - Default model updated to `claude-haiku-4-5-20251001`
 
-## [0.1.0] - 2024-12-12
+## [0.1.0] - 2025-12-12
 
 ### Added
 

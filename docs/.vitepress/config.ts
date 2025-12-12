@@ -149,7 +149,7 @@ const shared = defineConfig({
     },
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present',
+      copyright: 'Copyright © 2025-present',
     },
   },
 });
