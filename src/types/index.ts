@@ -121,6 +121,10 @@ export interface TranslationResult {
     tokensUsed: {
       input: number;
       output: number;
+      /** Tokens read from cache (90% cost reduction) */
+      cacheRead?: number;
+      /** Tokens written to cache (25% cost increase for first write) */
+      cacheWrite?: number;
     };
     duration: number;
     provider: string;

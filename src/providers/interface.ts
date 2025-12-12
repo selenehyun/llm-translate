@@ -6,9 +6,20 @@ import type { ProviderName } from '../types/index.js';
 
 export type ChatRole = 'system' | 'user' | 'assistant';
 
+/**
+ * Content part with optional cache control for prompt caching
+ */
+export interface CacheableTextPart {
+  type: 'text';
+  text: string;
+  /** Enable prompt caching for this content part (Claude only) */
+  cacheControl?: { type: 'ephemeral' };
+}
+
 export interface ChatMessage {
   role: ChatRole;
-  content: string;
+  /** Content can be a string or array of cacheable parts */
+  content: string | CacheableTextPart[];
 }
 
 // ============================================================================
@@ -27,6 +38,10 @@ export interface ChatResponse {
   usage: {
     inputTokens: number;
     outputTokens: number;
+    /** Tokens read from cache (90% cost reduction) */
+    cacheReadTokens?: number;
+    /** Tokens written to cache (25% cost increase for first write) */
+    cacheWriteTokens?: number;
   };
   model: string;
   finishReason: 'stop' | 'length' | 'error';

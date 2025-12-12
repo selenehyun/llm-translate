@@ -7,6 +7,7 @@ import type {
   ChatRequest,
   ChatResponse,
   ModelInfo,
+  CacheableTextPart,
 } from './interface.js';
 import { TranslationError, ErrorCode } from '../errors.js';
 import { estimateTokens } from '../utils/tokens.js';
@@ -91,21 +92,31 @@ export class ClaudeProvider implements LLMProvider {
     const model = request.model ?? this.defaultModel;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const messages = this.convertMessages(request.messages) as any;
+
       const result = await generateText({
         model: this.client(model),
-        messages: request.messages.map((msg) => ({
-          role: msg.role as 'system' | 'user' | 'assistant',
-          content: msg.content,
-        })),
+        messages,
         temperature: request.temperature ?? 0.3,
         maxTokens: request.maxTokens ?? 4096,
       });
+
+      // Extract cache token usage from provider metadata
+      const anthropicMeta = result.providerMetadata?.anthropic as
+        | {
+            cacheCreationInputTokens?: number;
+            cacheReadInputTokens?: number;
+          }
+        | undefined;
 
       return {
         content: result.text,
         usage: {
           inputTokens: result.usage?.promptTokens ?? 0,
           outputTokens: result.usage?.completionTokens ?? 0,
+          cacheReadTokens: anthropicMeta?.cacheReadInputTokens,
+          cacheWriteTokens: anthropicMeta?.cacheCreationInputTokens,
         },
         model,
         finishReason: mapFinishReason(result.finishReason),
@@ -115,16 +126,46 @@ export class ClaudeProvider implements LLMProvider {
     }
   }
 
+  /**
+   * Convert messages to Vercel AI SDK format with cache control support
+   */
+  private convertMessages(
+    messages: Array<{
+      role: 'system' | 'user' | 'assistant';
+      content: string | CacheableTextPart[];
+    }>
+  ) {
+    return messages.map((msg) => {
+      // Simple string content - no caching
+      if (typeof msg.content === 'string') {
+        return { role: msg.role, content: msg.content };
+      }
+
+      // Array of parts with potential cache control
+      const parts = msg.content.map((part) => ({
+        type: 'text' as const,
+        text: part.text,
+        ...(part.cacheControl && {
+          providerOptions: {
+            anthropic: { cacheControl: part.cacheControl },
+          },
+        }),
+      }));
+
+      return { role: msg.role, content: parts };
+    });
+  }
+
   async *stream(request: ChatRequest): AsyncIterable<string> {
     const model = request.model ?? this.defaultModel;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const messages = this.convertMessages(request.messages) as any;
+
       const result = streamText({
         model: this.client(model),
-        messages: request.messages.map((msg) => ({
-          role: msg.role as 'system' | 'user' | 'assistant',
-          content: msg.content,
-        })),
+        messages,
         temperature: request.temperature ?? 0.3,
         maxTokens: request.maxTokens ?? 4096,
       });

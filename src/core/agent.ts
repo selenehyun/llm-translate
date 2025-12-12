@@ -4,7 +4,11 @@ import type {
   ResolvedGlossary,
   QualityEvaluation,
 } from "../types/index.js";
-import type { LLMProvider, ChatMessage } from "../providers/interface.js";
+import type {
+  LLMProvider,
+  ChatMessage,
+  CacheableTextPart,
+} from "../providers/interface.js";
 import { createGlossaryLookup } from "../services/glossary.js";
 import { logger, createTimer } from "../utils/logger.js";
 import { TranslationError, ErrorCode } from "../errors.js";
@@ -12,6 +16,93 @@ import { TranslationError, ErrorCode } from "../errors.js";
 // ============================================================================
 // Prompt Templates (from RFC.md Section 7.2)
 // ============================================================================
+
+/**
+ * Build cacheable system instructions for translation
+ * This part is static and can be cached across multiple requests
+ */
+function buildSystemInstructions(
+  sourceLang: string,
+  targetLang: string
+): string {
+  return `You are a professional translator specializing in ${sourceLang} to ${targetLang} translation.
+
+## Rules:
+1. Apply glossary terms exactly as specified
+2. Preserve all formatting (markdown, HTML tags, code blocks)
+3. Maintain the same tone and style
+4. Do not translate content inside code blocks
+5. Keep URLs, file paths, and technical identifiers unchanged
+6. Keep placeholders like __CODE_BLOCK_0__ unchanged`;
+}
+
+/**
+ * Build cacheable glossary section
+ * This can be cached as it's reused across multiple chunks
+ */
+function buildGlossarySection(glossaryText: string): string {
+  return `## Glossary (MUST use these exact translations):
+${glossaryText || "No glossary provided."}`;
+}
+
+/**
+ * Build the dynamic part of the translation prompt (not cached)
+ */
+function buildTranslationContent(
+  sourceText: string,
+  context?: { documentPurpose?: string; previousContext?: string }
+): string {
+  return `## Document Context:
+Purpose: ${context?.documentPurpose ?? "General translation"}
+Previous content: ${context?.previousContext ?? "None"}
+
+## Source Text:
+${sourceText}
+
+## Translation:`;
+}
+
+/**
+ * Build message with cacheable parts for initial translation
+ * Uses prompt caching for system instructions and glossary
+ */
+function buildCacheableTranslationMessage(
+  sourceText: string,
+  sourceLang: string,
+  targetLang: string,
+  glossaryText: string,
+  context?: { documentPurpose?: string; previousContext?: string }
+): ChatMessage {
+  const systemInstructions = buildSystemInstructions(sourceLang, targetLang);
+  const glossarySection = buildGlossarySection(glossaryText);
+  const translationContent = buildTranslationContent(sourceText, context);
+
+  // Structure content parts with cache control
+  // System instructions + glossary are cached (static across chunks)
+  // Translation content is dynamic (changes per chunk)
+  const contentParts: CacheableTextPart[] = [
+    {
+      type: "text",
+      text: systemInstructions,
+      cacheControl: { type: "ephemeral" },
+    },
+    {
+      type: "text",
+      text: glossarySection,
+      cacheControl: { type: "ephemeral" },
+    },
+    {
+      type: "text",
+      text: translationContent,
+      // No cache control - this is dynamic per request
+    },
+  ];
+
+  return {
+    role: "user",
+    content: contentParts,
+  };
+}
 
 function buildInitialTranslationPrompt(
   sourceText: string,
@@ -129,6 +220,8 @@ export interface TranslationAgentOptions {
   verbose?: boolean;
   /** If true, throw error when quality threshold is not met after max iterations */
   strictQuality?: boolean;
+  /** Enable prompt caching for Claude provider (default: true) */
+  enableCaching?: boolean;
 }
 
 export class TranslationAgent {
@@ -137,6 +230,7 @@ export class TranslationAgent {
   private maxIterations: number;
   private verbose: boolean;
   private strictQuality: boolean;
+  private enableCaching: boolean;
 
   constructor(options: TranslationAgentOptions) {
     this.provider = options.provider;
@@ -144,6 +238,9 @@ export class TranslationAgent {
     this.maxIterations = options.maxIterations ?? 4;
     this.verbose = options.verbose ?? false;
     this.strictQuality = options.strictQuality ?? false;
+    // Enable caching by default for Claude provider
+    this.enableCaching =
+      options.enableCaching ?? options.provider.name === "claude";
   }
 
   /**
@@ -153,6 +250,8 @@ export class TranslationAgent {
     const timer = createTimer();
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+    let totalCacheReadTokens = 0;
+    let totalCacheWriteTokens = 0;
     let iterations = 0;
 
     // Prepare glossary text for prompts
@@ -167,17 +266,20 @@ export class TranslationAgent {
       logger.info("Starting initial translation...");
     }
 
-    let currentTranslation = await this.generateInitialTranslation(
+    const initialResult = await this.generateInitialTranslation(
       request.content,
       request.sourceLang,
       request.targetLang,
       glossaryText,
       request.context
     );
+    let currentTranslation = initialResult.content;
     iterations++;
 
-    totalInputTokens += this.provider.countTokens(request.content);
-    totalOutputTokens += this.provider.countTokens(currentTranslation);
+    totalInputTokens += initialResult.usage.inputTokens;
+    totalOutputTokens += initialResult.usage.outputTokens;
+    totalCacheReadTokens += initialResult.usage.cacheReadTokens ?? 0;
+    totalCacheWriteTokens += initialResult.usage.cacheWriteTokens ?? 0;
 
     // Step 2: Evaluate and Refine Loop
     let qualityScore = 0;
@@ -231,16 +333,19 @@ export class TranslationAgent {
         logger.info("Applying improvements...");
       }
 
-      currentTranslation = await this.improveTranslation(
+      const improveResult = await this.improveTranslation(
         request.content,
         currentTranslation,
         suggestions,
         glossaryText
       );
+      currentTranslation = improveResult.content;
 
       iterations++;
-      totalInputTokens += this.provider.countTokens(request.content) * 2; // rough estimate
-      totalOutputTokens += this.provider.countTokens(currentTranslation);
+      totalInputTokens += improveResult.usage.inputTokens;
+      totalOutputTokens += improveResult.usage.outputTokens;
+      totalCacheReadTokens += improveResult.usage.cacheReadTokens ?? 0;
+      totalCacheWriteTokens += improveResult.usage.cacheWriteTokens ?? 0;
     }
 
     // Final evaluation if not done
@@ -273,6 +378,17 @@ export class TranslationAgent {
       );
     }
 
+    // Log cache efficiency if verbose and caching was used
+    if (this.verbose && (totalCacheReadTokens > 0 || totalCacheWriteTokens > 0)) {
+      const cacheHitRate =
+        totalCacheReadTokens > 0
+          ? ((totalCacheReadTokens / (totalCacheReadTokens + totalInputTokens)) * 100).toFixed(1)
+          : "0";
+      logger.info(
+        `Cache stats: ${totalCacheReadTokens} read, ${totalCacheWriteTokens} written (${cacheHitRate}% hit rate)`
+      );
+    }
+
     return {
       content: currentTranslation,
       metadata: {
@@ -283,6 +399,8 @@ export class TranslationAgent {
         tokensUsed: {
           input: totalInputTokens,
           output: totalOutputTokens,
+          cacheRead: totalCacheReadTokens,
+          cacheWrite: totalCacheWriteTokens,
         },
         duration: timer.elapsed(),
         provider: this.provider.name,
@@ -312,23 +430,51 @@ export class TranslationAgent {
       previousChunks?: string[];
       documentSummary?: string;
     }
-  ): Promise<string> {
-    const prompt = buildInitialTranslationPrompt(
-      sourceText,
-      sourceLang,
-      targetLang,
-      glossaryText,
-      {
-        documentPurpose: context?.documentPurpose,
-        previousContext: context?.previousChunks?.slice(-2).join("\n"),
-      }
-    );
+  ): Promise<{
+    content: string;
+    usage: {
+      inputTokens: number;
+      outputTokens: number;
+      cacheReadTokens?: number;
+      cacheWriteTokens?: number;
+    };
+  }> {
+    let messages: ChatMessage[];
 
-    const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+    if (this.enableCaching) {
+      // Use cacheable message format for Claude
+      messages = [
+        buildCacheableTranslationMessage(sourceText, sourceLang, targetLang, glossaryText, {
+          documentPurpose: context?.documentPurpose,
+          previousContext: context?.previousChunks?.slice(-2).join("\n"),
+        }),
+      ];
+    } else {
+      // Fallback to simple string format for other providers
+      const prompt = buildInitialTranslationPrompt(
+        sourceText,
+        sourceLang,
+        targetLang,
+        glossaryText,
+        {
+          documentPurpose: context?.documentPurpose,
+          previousContext: context?.previousChunks?.slice(-2).join("\n"),
+        }
+      );
+      messages = [{ role: "user", content: prompt }];
+    }
 
     const response = await this.provider.chat({ messages });
-    // Preserve leading/trailing whitespace from source to maintain document structure
-    return this.preserveWhitespace(sourceText, response.content.trim());
+
+    return {
+      content: this.preserveWhitespace(sourceText, response.content.trim()),
+      usage: {
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
+        cacheReadTokens: response.usage.cacheReadTokens,
+        cacheWriteTokens: response.usage.cacheWriteTokens,
+      },
+    };
   }
 
   private async generateReflection(
@@ -357,19 +503,64 @@ export class TranslationAgent {
     currentTranslation: string,
     suggestions: string,
     glossaryText: string
-  ): Promise<string> {
-    const prompt = buildImprovementPrompt(
-      sourceText,
-      currentTranslation,
-      suggestions,
-      glossaryText
-    );
+  ): Promise<{
+    content: string;
+    usage: {
+      inputTokens: number;
+      outputTokens: number;
+      cacheReadTokens?: number;
+      cacheWriteTokens?: number;
+    };
+  }> {
+    let messages: ChatMessage[];
 
-    const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+    if (this.enableCaching) {
+      // Use cacheable format - glossary is cached
+      const contentParts: CacheableTextPart[] = [
+        {
+          type: "text",
+          text: `Improve this translation based on the following suggestions.
+
+## Glossary (MUST apply):
+${glossaryText || "No glossary provided."}`,
+          cacheControl: { type: "ephemeral" },
+        },
+        {
+          type: "text",
+          text: `## Source Text:
+${sourceText}
+
+## Current Translation:
+${currentTranslation}
+
+## Improvement Suggestions:
+${suggestions}
+
+Provide only the improved translation, nothing else:`,
+        },
+      ];
+      messages = [{ role: "user", content: contentParts }];
+    } else {
+      const prompt = buildImprovementPrompt(
+        sourceText,
+        currentTranslation,
+        suggestions,
+        glossaryText
+      );
+      messages = [{ role: "user", content: prompt }];
+    }
 
     const response = await this.provider.chat({ messages });
-    // Preserve leading/trailing whitespace from source to maintain document structure
-    return this.preserveWhitespace(sourceText, response.content.trim());
+
+    return {
+      content: this.preserveWhitespace(sourceText, response.content.trim()),
+      usage: {
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
+        cacheReadTokens: response.usage.cacheReadTokens,
+        cacheWriteTokens: response.usage.cacheWriteTokens,
+      },
+    };
   }
 
   private async evaluateQuality(
