@@ -30,7 +30,7 @@ export interface OutputOptions {
 export interface AdvancedOptions {
   chunkSize?: string;  // Commander returns strings, parsed to number in handler
   parallel?: number;
-  noCache?: boolean;
+  cache?: boolean;  // Commander's --no-cache sets this to false
   context?: string;
   strictQuality?: boolean;
   strictGlossary?: boolean;

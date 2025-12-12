@@ -195,6 +195,7 @@ export interface TranslateConfig {
   languages: {
     source: string;   // ISO 639-1 code
     targets: string[];
+    styles?: Record<string, string>;  // Per-language style instructions (e.g., { "ko": "경어체", "ja": "です・ます調" })
   };
   provider: {
     default: ProviderName;
@@ -551,6 +552,7 @@ You are a professional translator. Translate the following {sourceLang} text to 
 
 ## Document Context:
 Purpose: {documentPurpose}
+Style: {styleInstruction}
 Previous content: {previousContext}
 
 ## Rules:
@@ -631,6 +633,19 @@ Respond with only a JSON object:
 {"score": <number>, "breakdown": {"accuracy": <n>, "fluency": <n>, "glossary": <n>, "format": <n>}, "issues": ["issue1", "issue2"]}
 ```
 
+**Prompt Variables:**
+
+| Variable | Source | Description |
+|----------|--------|-------------|
+| `{sourceLang}` | `languages.source` | Source language code |
+| `{targetLang}` | CLI argument or iteration | Target language code |
+| `{glossaryTerms}` | Resolved glossary | Formatted glossary terms for target language |
+| `{documentPurpose}` | `project.purpose` or `--context` | Document context description |
+| `{styleInstruction}` | `languages.styles[targetLang]` | Per-language style instruction (e.g., "경어체", "です・ます調"). Empty if not specified. |
+| `{previousContext}` | Previous chunks | Context from previously translated chunks |
+| `{sourceText}` | Input content | Text to translate |
+| `{translatedText}` | Translation result | Current translation (for reflection/evaluation) |
+
 ---
 
 ## 8. File Format Specifications
@@ -647,7 +662,11 @@ Respond with only a JSON object:
   },
   "languages": {
     "source": "en",
-    "targets": ["ko", "ja", "zh-CN"]
+    "targets": ["ko", "ja", "zh-CN"],
+    "styles": {
+      "ko": "경어체(존댓말)를 사용하세요",
+      "ja": "敬語(です・ます調)を使用してください"
+    }
   },
   "provider": {
     "default": "claude",

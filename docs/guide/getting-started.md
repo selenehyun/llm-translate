@@ -5,13 +5,13 @@
 ### npm (Recommended)
 
 ```bash
-npm install -g llm-translate
+npm install -g @llm-translate/cli
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/user/llm-translate.git
+git clone https://github.com/selenehyun/llm-translate.git
 cd llm-translate
 npm install
 npm run build
@@ -138,7 +138,7 @@ After translation, you'll see:
 
 ## Next Steps
 
-- [Configure your project](/guide/configuration) for optimal settings
-- [Set up a glossary](/guide/glossary) for consistent terminology
-- [Understand quality control](/guide/quality-control) and tuning
-- [Optimize costs](/guide/cost-optimization) for large projects
+- [Configure your project](./configuration) for optimal settings
+- [Set up a glossary](./glossary) for consistent terminology
+- [Understand quality control](./quality-control) and tuning
+- [Optimize costs](./cost-optimization) for large projects

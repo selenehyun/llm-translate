@@ -1,0 +1,300 @@
+# プロバイダー
+
+異なるAIサービス向けのLLMプロバイダー実装です。
+
+## 概要
+
+すべてのプロバイダーは `LLMProvider` インターフェースを実装しています。
+
+```typescript
+interface LLMProvider {
+  readonly name: ProviderName;
+  readonly defaultModel: string;
+
+  chat(request: ChatRequest): Promise<ChatResponse>;
+  stream(request: ChatRequest): AsyncIterable<string>;
+  countTokens(text: string): number;
+  getModelInfo(model?: string): ModelInfo;
+}
+```
+
+## Claude プロバイダー
+
+推奨されるプロバイダーで、プロンプトキャッシングに完全対応しています。
+
+### セットアップ
+
+```typescript
+import { createClaudeProvider } from '@llm-translate/cli';
+
+const provider = createClaudeProvider({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  defaultModel: 'claude-haiku-4-5-20251001',
+});
+```
+
+### 設定
+
+```typescript
+interface ClaudeProviderConfig {
+  apiKey?: string;          // Defaults to ANTHROPIC_API_KEY env
+  baseUrl?: string;         // Custom API endpoint
+  defaultModel?: string;    // Default: claude-haiku-4-5-20251001
+}
+```
+
+### 利用可能なモデル
+
+| モデル | コンテキスト | 入力コスト | 出力コスト |
+|-------|---------|------------|-------------|
+|`claude-haiku-4-5-20251001`| 200K | $0.001/1K | $0.005/1K |
+|`claude-sonnet-4-5-20250929`| 200K | $0.003/1K | $0.015/1K |
+|`claude-opus-4-5-20251101`| 200K | $0.015/1K | $0.075/1K |
+
+### プロンプトキャッシング
+
+Claude プロバイダーはプロンプトキャッシングを自動的にサポートしています。
+
+```typescript
+const response = await provider.chat({
+  messages: [
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: 'System instructions...',
+          cacheControl: { type: 'ephemeral' },  // Cache this
+        },
+        {
+          type: 'text',
+          text: 'User content...',  // Don't cache
+        },
+      ],
+    },
+  ],
+});
+
+console.log(response.usage);
+// {
+//   inputTokens: 100,
+//   outputTokens: 200,
+//   cacheReadTokens: 500,    // Tokens read from cache
+//   cacheWriteTokens: 0,     // Tokens written to cache
+// }
+```
+
+## OpenAI プロバイダー
+
+### セットアップ
+
+```typescript
+import { createOpenAIProvider } from '@llm-translate/cli';
+
+const provider = createOpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY,
+  defaultModel: 'gpt-4o-mini',
+});
+```
+
+### 設定
+
+```typescript
+interface OpenAIProviderConfig {
+  apiKey?: string;          // Defaults to OPENAI_API_KEY env
+  baseUrl?: string;         // Custom API endpoint
+  defaultModel?: string;    // Default: gpt-4o-mini
+  organization?: string;    // OpenAI organization ID
+}
+```
+
+### 利用可能なモデル
+
+| モデル | コンテキスト | 入力コスト | 出力コスト |
+|-------|---------|------------|-------------|
+|`gpt-4o-mini`| 128K | $0.00015/1K | $0.0006/1K |
+|`gpt-4o`| 128K | $0.0025/1K | $0.01/1K |
+|`gpt-4-turbo`| 128K | $0.01/1K | $0.03/1K |
+
+### 自動キャッシング
+
+OpenAI は 1024 トークンを超えるプロンプトのキャッシングを自動的に処理します。
+
+## Ollama プロバイダー
+
+ローカルの自己ホスト型モデル向けです。
+
+### セットアップ
+
+```typescript
+import { createOllamaProvider } from '@llm-translate/cli';
+
+const provider = createOllamaProvider({
+  baseUrl: 'http://localhost:11434',
+  defaultModel: 'llama3.1',
+});
+```
+
+### 設定
+
+```typescript
+interface OllamaProviderConfig {
+  baseUrl?: string;         // Default: http://localhost:11434
+  defaultModel?: string;    // Default: llama3.1
+}
+```
+
+### 利用可能なモデル
+
+Ollama インストール環境で利用可能なすべてのモデル：
+
+```bash
+# List available models
+ollama list
+
+# Pull a model
+ollama pull llama3.1
+ollama pull mistral
+ollama pull codellama
+```
+
+### 制限事項
+
+- プロンプトキャッシングはサポートされていません
+- モデルによって品質が異なります
+- コンテキストウィンドウが限定されています（モデル依存）
+
+## プロバイダーインターフェース
+
+### ChatRequest
+
+```typescript
+interface ChatRequest {
+  messages: ChatMessage[];
+  model?: string;
+  temperature?: number;    // Default: 0.3
+  maxTokens?: number;      // Default: 4096
+}
+
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | CacheableTextPart[];
+}
+
+interface CacheableTextPart {
+  type: 'text';
+  text: string;
+  cacheControl?: { type: 'ephemeral' };
+}
+```
+
+### ChatResponse
+
+```typescript
+interface ChatResponse {
+  content: string;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+  };
+  model: string;
+  finishReason: 'stop' | 'length' | 'error';
+}
+```
+
+### ModelInfo
+
+```typescript
+interface ModelInfo {
+  maxContextTokens: number;
+  supportsStreaming: boolean;
+  costPer1kInput?: number;
+  costPer1kOutput?: number;
+}
+```
+
+## カスタムプロバイダー
+
+独自のプロバイダーを実装します：
+
+```typescript
+import type { LLMProvider, ChatRequest, ChatResponse } from '@llm-translate/cli';
+
+class CustomProvider implements LLMProvider {
+  readonly name = 'custom' as const;
+  readonly defaultModel = 'custom-model';
+
+  async chat(request: ChatRequest): Promise<ChatResponse> {
+    // Your implementation
+    const response = await callYourAPI(request);
+
+    return {
+      content: response.text,
+      usage: {
+        inputTokens: response.promptTokens,
+        outputTokens: response.completionTokens,
+      },
+      model: request.model ?? this.defaultModel,
+      finishReason: 'stop',
+    };
+  }
+
+  async *stream(request: ChatRequest): AsyncIterable<string> {
+    // Streaming implementation
+    for await (const chunk of streamYourAPI(request)) {
+      yield chunk.text;
+    }
+  }
+
+  countTokens(text: string): number {
+    // Token estimation
+    return Math.ceil(text.length / 4);
+  }
+
+  getModelInfo(model?: string): ModelInfo {
+    return {
+      maxContextTokens: 100000,
+      supportsStreaming: true,
+    };
+  }
+}
+```
+
+## プロバイダー選択ガイド
+
+| ユースケース | 推奨プロバイダー | モデル |
+|----------|---------------------|-------|
+| コスト効率的 | Claude | Haiku 4.5 |
+| 高品質 | Claude | Sonnet 4.5 |
+| OpenAI エコシステム | OpenAI | GPT-4o |
+| 予算制約がある | OpenAI | GPT-4o-mini |
+| プライバシー/オフライン | Ollama | Llama 3.1 |
+| エンタープライズ | Claude/OpenAI | 異なります |
+
+## エラーハンドリング
+
+すべてのプロバイダーは `TranslationError` をスローします：
+
+```typescript
+import { TranslationError, ErrorCode } from '@llm-translate/cli';
+
+try {
+  await provider.chat(request);
+} catch (error) {
+  if (error instanceof TranslationError) {
+    switch (error.code) {
+      case ErrorCode.PROVIDER_AUTH_FAILED:
+        console.error('Invalid API key');
+        break;
+      case ErrorCode.PROVIDER_RATE_LIMITED:
+        console.error('Rate limited, retry later');
+        break;
+      case ErrorCode.PROVIDER_ERROR:
+        console.error('Provider error:', error.message);
+        break;
+    }
+  }
+}
+```

@@ -5,7 +5,7 @@ The main entry point for translation operations.
 ## Constructor
 
 ```typescript
-import { TranslationEngine } from 'llm-translate';
+import { TranslationEngine } from '@llm-translate/cli';
 
 const engine = new TranslationEngine(options: TranslationEngineOptions);
 ```
@@ -222,7 +222,7 @@ import {
   createClaudeProvider,
   loadGlossary,
   resolveGlossary,
-} from 'llm-translate';
+} from '@llm-translate/cli';
 
 async function translateDocs() {
   // Setup provider

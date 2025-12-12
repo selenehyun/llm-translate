@@ -18,6 +18,12 @@ import { loadGlossary, resolveGlossary } from '../services/glossary.js';
 import { getProvider, getProviderConfigFromEnv } from '../providers/registry.js';
 import { logger, createTimer } from '../utils/logger.js';
 import { TranslationError, ErrorCode } from '../errors.js';
+import {
+  CacheManager,
+  createCacheManager,
+  createNullCacheManager,
+  type CacheKey,
+} from '../services/cache.js';
 
 // ============================================================================
 // Engine Options
@@ -27,6 +33,8 @@ export interface TranslationEngineOptions {
   config: TranslateConfig;
   provider?: LLMProvider;
   verbose?: boolean;
+  /** Disable caching (--no-cache mode) */
+  noCache?: boolean;
 }
 
 export interface TranslateFileOptions {
@@ -38,6 +46,8 @@ export interface TranslateFileOptions {
   qualityThreshold?: number;
   maxIterations?: number;
   context?: string;
+  /** Per-language style instruction (e.g., "경어체", "です・ます調"). Falls back to config.languages.styles[targetLang] if not specified. */
+  styleInstruction?: string;
   /** If true, throw error when quality threshold is not met */
   strictQuality?: boolean;
   /** If true, throw error when glossary terms are missed */
@@ -52,6 +62,9 @@ export class TranslationEngine {
   private config: TranslateConfig;
   private provider: LLMProvider;
   private verbose: boolean;
+  private cache: CacheManager;
+  private cacheHits = 0;
+  private cacheMisses = 0;
 
   constructor(options: TranslationEngineOptions) {
     this.config = options.config;
@@ -63,6 +76,24 @@ export class TranslationEngine {
     } else {
       const providerConfig = getProviderConfigFromEnv(this.config.provider.default);
       this.provider = getProvider(this.config.provider.default, providerConfig);
+    }
+
+    // Initialize cache
+    const cacheDisabled = options.noCache || !this.config.paths?.cache;
+    if (cacheDisabled) {
+      this.cache = createNullCacheManager();
+      if (this.verbose && options.noCache) {
+        logger.info('Cache disabled (--no-cache)');
+      }
+    } else {
+      this.cache = createCacheManager({
+        cacheDir: this.config.paths.cache!,
+        verbose: this.verbose,
+      });
+      if (this.verbose) {
+        const stats = this.cache.getStats();
+        logger.info(`Cache initialized: ${stats.entries} entries`);
+      }
     }
   }
 
@@ -285,6 +316,10 @@ export class TranslationEngine {
         ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
         : 0;
 
+    // Calculate cache statistics from chunk results
+    const cacheHits = chunkResults.filter((r) => r.cached).length;
+    const cacheMisses = chunkResults.filter((r) => !r.cached && r.qualityScore > 0).length;
+
     return {
       content: finalContent,
       chunks: chunkResults,
@@ -298,6 +333,10 @@ export class TranslationEngine {
         tokensUsed: {
           input: totalInputTokens,
           output: totalOutputTokens,
+        },
+        cache: {
+          hits: cacheHits,
+          misses: cacheMisses,
         },
       },
     };
@@ -372,6 +411,10 @@ export class TranslationEngine {
         ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
         : 0;
 
+    // Calculate cache statistics from chunk results
+    const cacheHits = chunkResults.filter((r) => r.cached).length;
+    const cacheMisses = chunkResults.filter((r) => !r.cached && r.qualityScore > 0).length;
+
     return {
       content: translatedContent,
       chunks: chunkResults,
@@ -386,6 +429,10 @@ export class TranslationEngine {
           input: totalInputTokens,
           output: totalOutputTokens,
         },
+        cache: {
+          hits: cacheHits,
+          misses: cacheMisses,
+        },
       },
     };
   }
@@ -396,9 +443,49 @@ export class TranslationEngine {
     glossary: ResolvedGlossary | undefined,
     agent: TranslationAgent
   ): Promise<ChunkResult> {
+    // Build cache key
+    const glossaryString = glossary
+      ? JSON.stringify(glossary.terms.map((t) => ({ s: t.source, t: t.target })))
+      : undefined;
+
+    const cacheKey: CacheKey = {
+      content: chunk.content,
+      sourceLang: options.sourceLang,
+      targetLang: options.targetLang,
+      glossary: glossaryString,
+      provider: this.provider.name,
+      model: this.config.provider.model ?? this.provider.defaultModel,
+    };
+
+    // Check cache first
+    const cacheResult = this.cache.get(cacheKey);
+    if (cacheResult.hit && cacheResult.entry) {
+      this.cacheHits++;
+      if (this.verbose) {
+        logger.info(`  ↳ Cache hit (quality: ${cacheResult.entry.qualityScore})`);
+      }
+      return {
+        original: chunk.content,
+        translated: cacheResult.entry.translation,
+        startOffset: chunk.startOffset,
+        endOffset: chunk.endOffset,
+        qualityScore: cacheResult.entry.qualityScore,
+        iterations: 0,
+        tokensUsed: { input: 0, output: 0, cacheRead: 1 },
+        cached: true,
+      };
+    }
+
+    this.cacheMisses++;
+
     // Build context from chunk metadata and options
+    // Resolve style instruction: CLI option > config.languages.styles[targetLang]
+    const resolvedStyleInstruction =
+      options.styleInstruction ?? this.config.languages.styles?.[options.targetLang];
+
     const context: TranslationRequest['context'] = {
       documentPurpose: options.context,
+      styleInstruction: resolvedStyleInstruction,
     };
 
     // Add header hierarchy context if available
@@ -422,6 +509,9 @@ export class TranslationEngine {
 
     try {
       const result = await agent.translate(request);
+
+      // Store in cache
+      this.cache.set(cacheKey, result.content, result.metadata.qualityScore);
 
       return {
         original: chunk.content,

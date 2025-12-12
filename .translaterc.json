@@ -7,7 +7,11 @@
   },
   "languages": {
     "source": "en",
-    "targets": ["ko", "ja", "zh-CN"]
+    "targets": ["ko", "ja", "zh-CN"],
+    "styles": {
+      "ko": "기술 문서로서 경어체(존댓말, ~습니다/~됩니다 체)를 사용하세요",
+      "ja": "技術文書として敬語(です・ます調)を使用してください"
+    }
   },
   "provider": {
     "default": "claude",

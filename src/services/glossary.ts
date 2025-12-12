@@ -181,14 +181,24 @@ export function createGlossaryLookup(glossary: ResolvedGlossary): GlossaryLookup
       const lines: string[] = [];
 
       for (const term of glossary.terms) {
-        if (term.doNotTranslate) {
-          lines.push(`- "${term.source}" → [DO NOT TRANSLATE, keep as-is]`);
+        const flags: string[] = [];
+
+        if (term.caseSensitive) {
+          flags.push('case-sensitive');
         } else {
-          let line = `- "${term.source}" → "${term.target}"`;
-          if (term.context) {
-            line += ` (context: ${term.context})`;
-          }
-          lines.push(line);
+          flags.push('case-insensitive');
+        }
+
+        if (term.context) {
+          flags.push(`context: ${term.context}`);
+        }
+
+        const flagStr = flags.length > 0 ? ` (${flags.join(', ')})` : '';
+
+        if (term.doNotTranslate) {
+          lines.push(`- "${term.source}" → [DO NOT TRANSLATE, keep as-is]${flagStr}`);
+        } else {
+          lines.push(`- "${term.source}" → "${term.target}"${flagStr}`);
         }
       }
 

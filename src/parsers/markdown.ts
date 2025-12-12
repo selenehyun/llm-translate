@@ -227,6 +227,12 @@ export function createTranslationMap(
 
 /**
  * Extract full text content for translation (preserving structure markers)
+ *
+ * Processing order is important:
+ * 1. First, handle fenced code blocks (must be at line start with newline after opener)
+ * 2. Then, handle multi-backtick inline code (for examples like ` ```js...``` `)
+ * 3. Then, handle single-backtick inline code
+ * 4. Finally, handle link URLs
  */
 export function extractTextForTranslation(content: string): {
   text: string;
@@ -235,21 +241,31 @@ export function extractTextForTranslation(content: string): {
   const preservedSections = new Map<string, string>();
   let placeholderIndex = 0;
 
-  // Replace code blocks with placeholders
-  let text = content.replace(/```[\s\S]*?```/g, (match) => {
+  // Step 1: Replace fenced code blocks FIRST (must start at beginning of line with newline)
+  // This ensures proper code blocks are captured before multi-backtick inline code
+  let text = content.replace(/^[ \t]*```[^\n]*\n[\s\S]*?^[ \t]*```[ \t]*$/gm, (match) => {
     const placeholder = `__CODE_BLOCK_${placeholderIndex++}__`;
     preservedSections.set(placeholder, match);
     return placeholder;
   });
 
-  // Replace inline code with placeholders
-  text = text.replace(/`[^`]+`/g, (match) => {
+  // Step 2: Replace multi-backtick inline code (2+ backticks on same line)
+  // This catches examples like `` `variable` `` or ` ```js...``` ` in tables
+  // Only matches within a single line to avoid matching across paragraphs
+  text = text.replace(/(`{2,})(?:[^`\n]|`(?!\1))*?\1/g, (match) => {
     const placeholder = `__INLINE_CODE_${placeholderIndex++}__`;
     preservedSections.set(placeholder, match);
     return placeholder;
   });
 
-  // Replace URLs in links with placeholders
+  // Step 3: Replace remaining single-backtick inline code
+  text = text.replace(/`[^`\n]+`/g, (match) => {
+    const placeholder = `__INLINE_CODE_${placeholderIndex++}__`;
+    preservedSections.set(placeholder, match);
+    return placeholder;
+  });
+
+  // Step 4: Replace URLs in links with placeholders
   text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, linkText, url) => {
     const placeholder = `__LINK_URL_${placeholderIndex++}__`;
     preservedSections.set(placeholder, url as string);
@@ -261,6 +277,11 @@ export function extractTextForTranslation(content: string): {
 
 /**
  * Restore preserved sections after translation
+ *
+ * Uses flexible regex matching to handle cases where LLM may have:
+ * - Added spaces around placeholders
+ * - Changed case
+ * - Added extra underscores
  */
 export function restorePreservedSections(
   translatedText: string,
@@ -268,9 +289,77 @@ export function restorePreservedSections(
 ): string {
   let result = translatedText;
 
-  for (const [placeholder, original] of preservedSections) {
-    result = result.replace(placeholder, original);
+  // Sort by key length descending to handle CODE_BLOCK_12 before CODE_BLOCK_1
+  const sortedEntries = [...preservedSections.entries()].sort(
+    (a, b) => b[0].length - a[0].length
+  );
+
+  for (const [placeholder, original] of sortedEntries) {
+    // Extract the core identifier (e.g., "CODE_BLOCK_12" from "__CODE_BLOCK_12__")
+    const match = placeholder.match(/^__(.+)__$/);
+    if (match && match[1]) {
+      const identifier = match[1];
+      // Escape any regex special characters in identifier
+      const escapedId = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Create flexible regex that handles:
+      // - Optional surrounding spaces (but NOT newlines - use [ \t]* instead of \s*)
+      // - Extra underscores
+      // - Case insensitivity
+      // - (?!\d) ensures CODE_BLOCK_1 doesn't match part of CODE_BLOCK_12
+      const flexiblePattern = new RegExp(
+        `[ \\t]*_*_*[ \\t]*${escapedId}(?!\\d)[ \\t]*_*_*[ \\t]*`,
+        'gi'
+      );
+      // Use function replacement to avoid special character interpretation ($&, $', etc.)
+      result = result.replace(flexiblePattern, () => original);
+    } else {
+      // Fallback to exact replacement - also use function to avoid special chars
+      result = result.split(placeholder).join(original);
+    }
   }
+
+  // Post-process: Ensure proper spacing around inline code
+  // This fixes cases where LLM removed spaces around placeholders during translation
+  result = ensureInlineCodeSpacing(result);
+
+  return result;
+}
+
+/**
+ * Ensure proper spacing around inline code backticks.
+ * LLMs often remove spaces around placeholders, causing markdown formatting issues.
+ *
+ * Rules:
+ * - Add space before ` if preceded by word char (letter/number/CJK)
+ * - Add space before ` if preceded by number+period (markdown list like "1.")
+ * - Add space after ` if followed by word char/CJK
+ * - Don't add spaces at line start/end
+ */
+function ensureInlineCodeSpacing(text: string): string {
+  // Match inline code: backtick(s) + content + same backticks
+  // We need to add spaces where they're missing around inline code
+
+  // CJK Unicode ranges: \u3000-\u9fff\uac00-\ud7af (Chinese, Japanese, Korean)
+
+  // Add space before inline code if preceded by:
+  // - word/CJK character
+  // - number followed by period (markdown numbered list: "1.")
+  let result = text.replace(
+    /([\w\u3000-\u9fff\uac00-\ud7af])(`+[^`\n]+`+)/g,
+    '$1 $2'
+  );
+
+  // Handle markdown numbered list case: "1.`code`" → "1. `code`"
+  result = result.replace(
+    /(\d+\.)(`+[^`\n]+`+)/g,
+    '$1 $2'
+  );
+
+  // Add space after inline code if followed by word/CJK character
+  result = result.replace(
+    /(`+[^`\n]+`+)([\w\u3000-\u9fff\uac00-\ud7af])/g,
+    '$1 $2'
+  );
 
   return result;
 }

@@ -183,7 +183,7 @@ import {
   createOpenAIProvider,
   createOllamaProvider,
   TranslationEngine,
-} from 'llm-translate';
+} from '@llm-translate/cli';
 
 // Switch providers easily
 const providers = {

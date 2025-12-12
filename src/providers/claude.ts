@@ -98,7 +98,7 @@ export class ClaudeProvider implements LLMProvider {
       const result = await generateText({
         model: this.client(model),
         messages,
-        temperature: request.temperature ?? 0.3,
+        temperature: request.temperature ?? 0,
         maxTokens: request.maxTokens ?? 4096,
       });
 
@@ -166,7 +166,7 @@ export class ClaudeProvider implements LLMProvider {
       const result = streamText({
         model: this.client(model),
         messages,
-        temperature: request.temperature ?? 0.3,
+        temperature: request.temperature ?? 0,
         maxTokens: request.maxTokens ?? 4096,
       });
 

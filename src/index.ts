@@ -18,6 +18,8 @@ export type {
   ChunkingConfig,
   QualityEvaluation,
   DocumentFormat,
+  CacheEntry,
+  CacheIndex,
 } from './types/index.js';
 
 // Provider Interface
@@ -48,6 +50,34 @@ export {
   createGlossaryLookup,
   checkGlossaryCompliance,
 } from './services/glossary.js';
+export {
+  CacheManager,
+  createCacheManager,
+  createNullCacheManager,
+  hashContent,
+  generateCacheKey,
+  // Invalidation Policies
+  GlossaryChangePolicy,
+  TTLPolicy,
+  ProviderChangePolicy,
+  QualityThresholdPolicy,
+  CompositePolicy,
+  // Preset Policy Configurations
+  createDefaultPolicies,
+  createStrictPolicies,
+  createMinimalPolicies,
+} from './services/cache.js';
+export type {
+  CacheOptions,
+  CacheKey,
+  CacheStats,
+  CacheResult,
+  CacheMetadata,
+  // Invalidation Policy Types
+  InvalidationPolicy,
+  InvalidationContext,
+  InvalidationResult,
+} from './services/cache.js';
 
 // Provider Registry
 export {
@@ -96,3 +126,22 @@ export {
 // Utilities
 export { estimateTokens, exceedsTokenLimit, truncateToTokenLimit } from './utils/tokens.js';
 export { logger, configureLogger, createTimer } from './utils/logger.js';
+
+// VitePress Integration
+export {
+  generateLocaleConfig,
+  generateLocale,
+  generateSidebarConfig,
+  detectLocales,
+  detectSidebarDirs,
+} from './integrations/vitepress.js';
+export type {
+  LocaleConfig,
+  ThemeConfig,
+  NavItem,
+  NavItemWithLink,
+  NavItemWithChildren,
+  SidebarItem,
+  GenerateOptions,
+  LocaleTranslations,
+} from './integrations/vitepress.js';

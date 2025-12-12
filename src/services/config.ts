@@ -21,6 +21,7 @@ const configSchema = z.object({
   languages: z.object({
     source: z.string(),
     targets: z.array(z.string()),
+    styles: z.record(z.string(), z.string()).optional(),
   }),
   provider: z.object({
     default: providerNameSchema,

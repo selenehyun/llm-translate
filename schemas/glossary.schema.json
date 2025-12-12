@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/selenehyun/llm-translate/schemas/glossary.schema.json",
+  "title": "llm-translate Glossary",
+  "description": "Schema for llm-translate glossary files",
+  "type": "object",
+  "required": ["metadata", "terms"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Glossary metadata",
+      "required": ["name", "sourceLang", "targetLangs", "version"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique identifier for the glossary"
+        },
+        "sourceLang": {
+          "type": "string",
+          "description": "Source language code (e.g., 'en', 'ko')",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+        },
+        "targetLangs": {
+          "type": "array",
+          "description": "List of target language codes",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+          },
+          "minItems": 1
+        },
+        "version": {
+          "type": "string",
+          "description": "Glossary version (semver recommended)",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain or category of the glossary (e.g., 'technical-documentation', 'legal')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "terms": {
+      "type": "array",
+      "description": "List of glossary terms",
+      "items": {
+        "$ref": "#/$defs/term"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "term": {
+      "type": "object",
+      "description": "A single glossary term",
+      "required": ["source", "targets"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source term to match",
+          "minLength": 1
+        },
+        "targets": {
+          "type": "object",
+          "description": "Target translations keyed by language code",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "context": {
+          "type": "string",
+          "description": "Context or usage hint for the translator"
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "description": "Whether matching should be case-sensitive. When false (default), 'API' matches 'api', 'Api', 'API', etc.",
+          "default": false
+        },
+        "doNotTranslate": {
+          "type": "boolean",
+          "description": "Keep the source term unchanged in all languages",
+          "default": false
+        },
+        "doNotTranslateFor": {
+          "type": "array",
+          "description": "Keep the source term unchanged for specific languages",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+          }
+        },
+        "partOfSpeech": {
+          "type": "string",
+          "description": "Part of speech for the term",
+          "enum": ["noun", "verb", "adjective", "other"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes for translators"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

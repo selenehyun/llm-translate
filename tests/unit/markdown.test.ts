@@ -171,4 +171,35 @@ describe('restorePreservedSections', () => {
     const result = restorePreservedSections(text, preserved);
     expect(result).toBe(text);
   });
+
+  it('should ensure proper spacing around inline code after restoration', () => {
+    // Simulate a case where LLM removed spaces around placeholder
+    const content = '1. Scan your `./docs` directory';
+    const { text, preservedSections } = extractTextForTranslation(content);
+
+    // Simulate LLM translation that removes spaces around placeholder
+    // Original: "1. Scan your __INLINE_CODE_0__ directory"
+    // LLM might produce: "1.__INLINE_CODE_0__디렉토리를 스캔합니다"
+    const translatedWithoutSpaces = text
+      .replace('1. Scan your ', '1.')
+      .replace(' directory', '디렉토리를 스캔합니다');
+
+    const restored = restorePreservedSections(translatedWithoutSpaces, preservedSections);
+
+    // Should have proper spacing around inline code
+    expect(restored).toContain('1. `./docs`');  // Space before backtick
+    expect(restored).toContain('`./docs` 디렉토리');  // Space after backtick
+  });
+
+  it('should add space between Korean text and inline code', () => {
+    const preserved = new Map<string, string>();
+    preserved.set('__INLINE_CODE_0__', '`code`');
+
+    // Korean text directly touching placeholder
+    const translated = '스캔합니다__INLINE_CODE_0__디렉토리';
+    const restored = restorePreservedSections(translated, preserved);
+
+    // Should have spaces around inline code
+    expect(restored).toBe('스캔합니다 `code` 디렉토리');
+  });
 });

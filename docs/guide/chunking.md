@@ -6,10 +6,12 @@ Large documents are split into chunks for translation. Understanding chunking he
 
 LLMs have context limits and perform better on focused content:
 
-- **Context limits**: Models have maximum input sizes
-- **Quality**: Smaller chunks get more focused attention
-- **Cost**: Allows caching of repeated content
-- **Progress**: Enables progress tracking and resumption
+| Reason | Description |
+|--------|-------------|
+| **Context limits** | Models have maximum input sizes |
+| **Quality** | Smaller chunks get more focused attention |
+| **Cost** | Allows caching of repeated content |
+| **Progress** | Enables progress tracking and resumption |
 
 ## Default Configuration
 
@@ -22,43 +24,54 @@ LLMs have context limits and perform better on focused content:
 }
 ```
 
-## Chunk Size
+## Chunk Size Options
 
 ### maxTokens
 
 Maximum tokens per chunk (excluding prompt overhead).
 
-| Size | Pros | Cons |
-|------|------|------|
-| 512 | Higher quality per chunk | More API calls |
-| 1024 | Balanced (default) | Good trade-off |
-| 2048 | Fewer API calls | May reduce quality |
+| Size | Best For | Trade-off |
+|------|----------|-----------|
+| 512 | High quality requirements | More API calls |
+| **1024** | General use (default) | Balanced |
+| 2048 | Cost optimization | May reduce quality |
 
 ### overlapTokens
 
-Context from previous chunk for continuity.
+Context from previous chunk ensures continuity across boundaries.
 
 ```
-Chunk 1: [Content A]
-Chunk 2: [Last 150 tokens of A] + [Content B]
-Chunk 3: [Last 150 tokens of B] + [Content C]
+Chunk 1: [Content A                    ]
+Chunk 2:            [overlap][Content B                    ]
+Chunk 3:                              [overlap][Content C  ]
 ```
+
+::: tip Recommended Overlap
+Use 10-15% of your `maxTokens` value. For 1024 tokens, 100-150 overlap tokens work well.
+:::
 
 ## Markdown-Aware Chunking
 
-llm-translate uses AST-based chunking that respects document structure:
+llm-translate uses AST-based chunking that respects document structure.
 
 ### Preserved Boundaries
 
-1. **Headers**: Never split in the middle of a section
-2. **Code blocks**: Keep code blocks intact
-3. **Lists**: Keep list items together when possible
-4. **Tables**: Keep tables intact
-5. **Paragraphs**: Split at paragraph boundaries
+The chunker never splits these elements:
+
+| Element | Behavior |
+|---------|----------|
+| Headers | Section boundaries preserved |
+| Code blocks | Always kept intact |
+| Lists | Items grouped when possible |
+| Tables | Never split across chunks |
+| Paragraphs | Split at natural boundaries |
 
 ### Example
 
-Input:
+::: details Click to see chunking example
+
+**Input document:**
+
 ```markdown
 # Introduction
 
@@ -74,41 +87,28 @@ the purpose of the document.
 
 ### Installation
 
-```bash
-npm install llm-translate
-```
+npm install @llm-translate/cli
 ```
 
-Chunks:
-```
-Chunk 1:
-# Introduction
-This is the introduction paragraph...
+**Result:**
 
-Chunk 2:
-## Getting Started
-### Prerequisites
-- Node.js 20+
-- npm or yarn
+```
+Chunk 1: # Introduction + paragraph
+Chunk 2: ## Getting Started + ### Prerequisites + list
+Chunk 3: ### Installation + code block
+```
 
-Chunk 3:
-### Installation
-```bash
-npm install llm-translate
-```
-```
+:::
 
 ## Configuration
 
-### CLI
+::: code-group
 
-```bash
+```bash [CLI]
 llm-translate file doc.md --target ko --chunk-size 2048
 ```
 
-### Config File
-
-```json
+```json [.translaterc.json]
 {
   "chunking": {
     "maxTokens": 2048,
@@ -121,26 +121,24 @@ llm-translate file doc.md --target ko --chunk-size 2048
 }
 ```
 
-### Programmatic
+```typescript [Programmatic]
+import { chunkContent } from '@llm-translate/cli';
 
-```typescript
-import { chunkMarkdown } from 'llm-translate';
-
-const chunks = chunkMarkdown(content, {
+const chunks = chunkContent(content, {
   maxTokens: 1024,
   overlapTokens: 150,
-  preserveCodeBlocks: true,
-  preserveTables: true,
 });
 ```
 
-## Optimization Strategies
+:::
 
-### For Quality
+## Optimization Presets
 
-Smaller chunks with more overlap:
+Choose based on your priority:
 
-```json
+::: code-group
+
+```json [Quality Focus]
 {
   "chunking": {
     "maxTokens": 512,
@@ -149,11 +147,7 @@ Smaller chunks with more overlap:
 }
 ```
 
-### For Cost
-
-Larger chunks with minimal overlap:
-
-```json
+```json [Cost Focus]
 {
   "chunking": {
     "maxTokens": 2048,
@@ -162,11 +156,7 @@ Larger chunks with minimal overlap:
 }
 ```
 
-### For Long Documents
-
-Balance chunk size with Self-Refine overhead:
-
-```json
+```json [Long Documents]
 {
   "chunking": {
     "maxTokens": 1500,
@@ -178,51 +168,42 @@ Balance chunk size with Self-Refine overhead:
 }
 ```
 
-## Special Content Handling
+:::
 
-### Code Blocks
+::: info When to use each preset
+- **Quality Focus**: Technical documentation, legal content
+- **Cost Focus**: Blog posts, general content
+- **Long Documents**: Books, comprehensive guides
+:::
 
-Code blocks are protected from translation:
+## Content Preservation
 
-```markdown
-Here's an example:
+### What Gets Protected
 
-```javascript
-// This code is NOT translated
-const greeting = "Hello, World!";
-console.log(greeting);
-```
+llm-translate automatically protects certain content from translation:
 
-The code above shows...
-```
+| Content Type | Example | Behavior |
+|--------------|---------|----------|
+| Code blocks | ` ```js ... ``` ` | Never translated |
+| Inline code | `` `variable` `` | Preserved |
+| URLs | `https://...` | Preserved |
+| File paths | `./path/to/file` | Preserved |
 
-### Inline Code
+### Link Handling
 
-Inline `code` is also preserved.
-
-### Links
-
-Links are preserved but link text may be translated:
+Link URLs are preserved, but link text is translated:
 
 ```markdown
 [Getting Started](./getting-started.md)
-→ [시작하기](./getting-started.md)
+↓
+[시작하기](./getting-started.md)
 ```
 
-### Tables
-
-Tables are kept intact within a single chunk when possible:
-
-```markdown
-| Feature | Support |
-|---------|---------|
-| Markdown | ✓ |
-| HTML | ✓ |
-```
-
-## Debugging Chunks
+## Debugging
 
 ### Preview Chunks
+
+Use `--dry-run` to see how your document will be chunked:
 
 ```bash
 llm-translate file doc.md --target ko --dry-run --verbose
@@ -239,61 +220,49 @@ Chunk breakdown:
   [1] Lines 1-45 (Introduction) - 823 tokens
   [2] Lines 46-89 (Getting Started) - 912 tokens
   [3] Lines 90-134 (Configuration) - 878 tokens
-  [4] Lines 135-180 (Usage) - 901 tokens
-  [5] Lines 181-220 (API) - 845 tokens
-  [6] Lines 221-250 (Troubleshooting) - 841 tokens
+  ...
 ```
 
 ### Programmatic Inspection
 
 ```typescript
-import { chunkMarkdown } from 'llm-translate';
+import { chunkContent, getChunkStats } from '@llm-translate/cli';
 
-const chunks = chunkMarkdown(content, { maxTokens: 1024 });
+const chunks = chunkContent(content, { maxTokens: 1024 });
+const stats = getChunkStats(chunks);
 
-chunks.forEach((chunk, i) => {
-  console.log(`Chunk ${i + 1}:`);
-  console.log(`  Tokens: ${chunk.tokenCount}`);
-  console.log(`  Lines: ${chunk.startLine}-${chunk.endLine}`);
-  console.log(`  Preview: ${chunk.content.slice(0, 100)}...`);
-});
+console.log(`Total chunks: ${stats.count}`);
+console.log(`Average size: ${stats.avgTokens} tokens`);
 ```
 
 ## Troubleshooting
 
-### Chunks Too Small
+::: warning Chunks Too Small
+**Symptom**: Many small chunks, excessive API calls
 
-**Symptom**: Many small chunks, high API calls
-
-**Solution**: Increase maxTokens
-
+**Solution**: Increase `maxTokens`
 ```json
 { "chunking": { "maxTokens": 2048 } }
 ```
+:::
 
-### Lost Context Between Chunks
-
+::: warning Lost Context Between Chunks
 **Symptom**: Inconsistent terminology across sections
 
-**Solution**: Increase overlap or use larger chunks
-
+**Solution**: Increase overlap or use glossary
 ```json
 { "chunking": { "overlapTokens": 300 } }
 ```
+:::
 
-### Code Blocks Being Split
+::: danger Code Blocks Being Split
+**Symptom**: Syntax errors in output
 
-**Symptom**: Syntax errors in translated code
+**Cause**: This should never happen. If it does, please [report an issue](https://github.com/selenehyun/llm-translate/issues).
+:::
 
-**Solution**: Code blocks should never be split. Check your content:
-
-```bash
-# Find large code blocks
-grep -n '```' doc.md
-```
-
-### Tables Being Mangled
-
+::: warning Tables Being Mangled
 **Symptom**: Broken table formatting
 
-**Solution**: Tables should be kept intact. For very large tables, consider simplifying.
+**Solution**: Tables should be kept intact automatically. For very large tables (100+ rows), consider splitting them manually.
+:::

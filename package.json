@@ -1,5 +1,5 @@
 {
-  "name": "llm-translate",
+  "name": "@llm-translate/cli",
   "version": "0.1.0",
   "description": "CLI-based document translation tool powered by LLMs with glossary enforcement and quality-aware refinement",
   "type": "module",
@@ -27,7 +27,10 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "docs:translate": "node ./dist/cli/index.js dir ./docs ./docs/ko --target-lang ko"
+    "docs:translate": "npm run docs:translate:ko && npm run docs:translate:ja && npm run docs:translate:zh",
+    "docs:translate:ko": "node ./dist/cli/index.js dir ./docs ./docs/ko --target-lang ko --glossary ./docs/glossary.json --parallel 8",
+    "docs:translate:ja": "node ./dist/cli/index.js dir ./docs ./docs/ja --target-lang ja --glossary ./docs/glossary.json --parallel 8",
+    "docs:translate:zh": "node ./dist/cli/index.js dir ./docs ./docs/zh --target-lang zh --glossary ./docs/glossary.json --parallel 8"
   },
   "keywords": [
     "translation",

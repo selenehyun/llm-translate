@@ -50,11 +50,15 @@ ${glossaryText || "No glossary provided."}`;
  */
 function buildTranslationContent(
   sourceText: string,
-  context?: { documentPurpose?: string; previousContext?: string }
+  context?: { documentPurpose?: string; styleInstruction?: string; previousContext?: string }
 ): string {
+  const styleSection = context?.styleInstruction
+    ? `Style: ${context.styleInstruction}\n`
+    : "";
+
   return `## Document Context:
 Purpose: ${context?.documentPurpose ?? "General translation"}
-Previous content: ${context?.previousContext ?? "None"}
+${styleSection}Previous content: ${context?.previousContext ?? "None"}
 
 ## Source Text:
 ${sourceText}
@@ -71,7 +75,7 @@ function buildCacheableTranslationMessage(
   sourceLang: string,
   targetLang: string,
   glossaryText: string,
-  context?: { documentPurpose?: string; previousContext?: string }
+  context?: { documentPurpose?: string; styleInstruction?: string; previousContext?: string }
 ): ChatMessage {
   const systemInstructions = buildSystemInstructions(sourceLang, targetLang);
   const glossarySection = buildGlossarySection(glossaryText);
@@ -109,8 +113,12 @@ function buildInitialTranslationPrompt(
   sourceLang: string,
   targetLang: string,
   glossaryText: string,
-  context?: { documentPurpose?: string; previousContext?: string }
+  context?: { documentPurpose?: string; styleInstruction?: string; previousContext?: string }
 ): string {
+  const styleSection = context?.styleInstruction
+    ? `Style: ${context.styleInstruction}\n`
+    : "";
+
   return `You are a professional translator. Translate the following ${sourceLang} text to ${targetLang}.
 
 ## Glossary (MUST use these exact translations):
@@ -118,7 +126,7 @@ ${glossaryText || "No glossary provided."}
 
 ## Document Context:
 Purpose: ${context?.documentPurpose ?? "General translation"}
-Previous content: ${context?.previousContext ?? "None"}
+${styleSection}Previous content: ${context?.previousContext ?? "None"}
 
 ## Rules:
 1. Apply glossary terms exactly as specified
@@ -427,6 +435,7 @@ export class TranslationAgent {
     glossaryText: string,
     context?: {
       documentPurpose?: string;
+      styleInstruction?: string;
       previousChunks?: string[];
       documentSummary?: string;
     }
@@ -446,6 +455,7 @@ export class TranslationAgent {
       messages = [
         buildCacheableTranslationMessage(sourceText, sourceLang, targetLang, glossaryText, {
           documentPurpose: context?.documentPurpose,
+          styleInstruction: context?.styleInstruction,
           previousContext: context?.previousChunks?.slice(-2).join("\n"),
         }),
       ];
@@ -458,6 +468,7 @@ export class TranslationAgent {
         glossaryText,
         {
           documentPurpose: context?.documentPurpose,
+          styleInstruction: context?.styleInstruction,
           previousContext: context?.previousChunks?.slice(-2).join("\n"),
         }
       );

@@ -14,6 +14,8 @@ export interface TranslateConfig {
   languages: {
     source: string;
     targets: string[];
+    /** Per-language style instructions (e.g., { "ko": "경어체", "ja": "です・ます調" }) */
+    styles?: Record<string, string>;
   };
   provider: {
     default: ProviderName;
@@ -101,6 +103,8 @@ export interface TranslationRequest {
   glossary?: ResolvedGlossary;
   context?: {
     documentPurpose?: string;
+    /** Per-language style instruction (e.g., "경어체", "です・ます調") */
+    styleInstruction?: string;
     previousChunks?: string[];
     documentSummary?: string;
   };
@@ -146,7 +150,11 @@ export interface ChunkResult {
   tokensUsed?: {
     input: number;
     output: number;
+    /** Number of cache hits for this chunk */
+    cacheRead?: number;
   };
+  /** Whether this chunk was retrieved from cache */
+  cached?: boolean;
 }
 
 export interface DocumentResult {
@@ -162,6 +170,15 @@ export interface DocumentResult {
     tokensUsed: {
       input: number;
       output: number;
+      /** Tokens read from cache (90% cost reduction) */
+      cacheRead?: number;
+      /** Tokens written to cache (25% cost increase for first write) */
+      cacheWrite?: number;
+    };
+    /** Cache statistics */
+    cache?: {
+      hits: number;
+      misses: number;
     };
   };
   glossaryCompliance?: {

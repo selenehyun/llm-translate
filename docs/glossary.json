@@ -1,0 +1,235 @@
+{
+  "$schema": "../schemas/glossary.schema.json",
+  "metadata": {
+    "name": "llm-translate-docs",
+    "sourceLang": "en",
+    "targetLangs": ["ko", "ja", "zh"],
+    "version": "1.0.0",
+    "domain": "technical-documentation"
+  },
+  "terms": [
+    {
+      "source": "Chunking",
+      "targets": {},
+      "doNotTranslate": true,
+      "caseSensitive": false,
+      "context": "Document splitting strategy for translation"
+    },
+    {
+      "source": "Self-Refine",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Iterative quality improvement algorithm"
+    },
+    {
+      "source": "llm-translate",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Product name"
+    },
+    {
+      "source": "API",
+      "targets": {},
+      "doNotTranslate": true,
+      "caseSensitive": true
+    },
+    {
+      "source": "CLI",
+      "targets": {},
+      "doNotTranslate": true,
+      "caseSensitive": true
+    },
+    {
+      "source": "LLM",
+      "targets": {},
+      "doNotTranslate": true,
+      "caseSensitive": true
+    },
+    {
+      "source": "Claude",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "OpenAI",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "Ollama",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "Haiku",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Claude model tier"
+    },
+    {
+      "source": "Sonnet",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Claude model tier"
+    },
+    {
+      "source": "Opus",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Claude model tier"
+    },
+    {
+      "source": "GPT-4o",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "GPT-4o-mini",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "prompt caching",
+      "targets": {
+        "ko": "프롬프트 캐싱",
+        "ja": "プロンプトキャッシング",
+        "zh": "提示缓存"
+      },
+      "context": "Feature to cache repeated prompt content for cost reduction"
+    },
+    {
+      "source": "glossary",
+      "targets": {
+        "ko": "용어집",
+        "ja": "用語集",
+        "zh": "术语表"
+      },
+      "context": "Term dictionary for consistent translation"
+    },
+    {
+      "source": "llm-translate file",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "CLI command for single file translation"
+    },
+    {
+      "source": "llm-translate dir",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "CLI command for directory batch translation"
+    },
+    {
+      "source": "llm-translate init",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "CLI command for initialization"
+    },
+    {
+      "source": "llm-translate glossary",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "CLI command for glossary management"
+    },
+    {
+      "source": "quality threshold",
+      "targets": {
+        "ko": "품질 임계값",
+        "ja": "品質しきい値",
+        "zh": "质量阈值"
+      },
+      "context": "Minimum quality score required for translation"
+    },
+    {
+      "source": "token",
+      "targets": {
+        "ko": "토큰",
+        "ja": "トークン",
+        "zh": "令牌"
+      },
+      "context": "LLM text processing unit"
+    },
+    {
+      "source": "chunk",
+      "targets": {
+        "ko": "청크",
+        "ja": "チャンク",
+        "zh": "分块"
+      },
+      "context": "Document segment for translation"
+    },
+    {
+      "source": "provider",
+      "targets": {
+        "ko": "제공자",
+        "ja": "プロバイダー",
+        "zh": "提供商"
+      },
+      "context": "LLM service provider (Claude, OpenAI, etc.)"
+    },
+    {
+      "source": "Markdown",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "AST",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Abstract Syntax Tree"
+    },
+    {
+      "source": "JSON",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "TypeScript",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "Node.js",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "npm",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "stdin",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "stdout",
+      "targets": {},
+      "doNotTranslate": true
+    },
+    {
+      "source": "VitePress",
+      "targets": {},
+      "doNotTranslate": true,
+      "context": "Static site generator"
+    },
+    {
+      "source": "sidebar",
+      "targets": {
+        "ko": "사이드바",
+        "ja": "サイドバー",
+        "zh": "侧边栏"
+      },
+      "context": "Navigation panel on the side"
+    },
+    {
+      "source": "locale",
+      "targets": {
+        "ko": "로케일",
+        "ja": "ロケール",
+        "zh": "语言环境"
+      },
+      "context": "Language/region setting"
+    }
+  ]
+}

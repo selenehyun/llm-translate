@@ -77,7 +77,7 @@ llm-translate dir ./docs ./docs-ko --target ko
 # Not: Process one file at a time
 ```
 
-See [Prompt Caching](/guide/prompt-caching) for details.
+See [Prompt Caching](./prompt-caching) for details.
 
 ### 4. Optimize Glossary Size
 

@@ -79,7 +79,7 @@ export const fileCommand = new Command('file')
         maxIterations: options.maxIterations ? parseInt(options.maxIterations, 10) : undefined,
         chunkSize: options.chunkSize ? parseInt(options.chunkSize, 10) : undefined,
         glossary: options.glossary,
-        noCache: options.noCache,
+        noCache: options.cache === false,
       });
 
       // Read input file
@@ -96,6 +96,9 @@ export const fileCommand = new Command('file')
       if (!options.quiet) {
         logger.info(`Reading: ${inputPath}`);
         logger.info(`Translating: ${options.sourceLang} → ${options.targetLang}`);
+        if (options.glossary) {
+          logger.info(`Glossary: ${resolve(options.glossary)}`);
+        }
       }
 
       // Dry run - just show what would be done
@@ -113,6 +116,7 @@ export const fileCommand = new Command('file')
       const engine = createTranslationEngine({
         config,
         verbose: options.verbose,
+        noCache: options.cache === false,
       });
 
       // Translate content
@@ -229,6 +233,7 @@ export async function handleStdinTranslation(
     const engine = createTranslationEngine({
       config,
       verbose: false,
+      noCache: options.cache === false,
     });
 
     // Translate content

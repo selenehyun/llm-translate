@@ -17,44 +17,53 @@ llm-translate dir <input> <output> [options]
 
 ## Options
 
-### File Selection
+### Language Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--pattern` | `**/*.md` | Glob pattern for files |
-| `--exclude` | none | Patterns to exclude |
-| `--recursive`, `-r` | true | Process subdirectories |
+| `-s, --source-lang <lang>` | auto-detect | Source language code |
+| `-t, --target-lang <lang>` | required | Target language code |
 
 ### Translation Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--source`, `-s` | auto-detect | Source language code |
-| `--target`, `-t` | required | Target language code |
-| `--glossary`, `-g` | none | Path to glossary file |
+| `-g, --glossary <path>` | none | Path to glossary file |
+| `-p, --provider <name>` | `claude` | LLM provider (claude\|openai\|ollama) |
+| `-m, --model <name>` | provider default | Model name |
+| `--context <text>` | none | Additional context for translation |
 
 ### Quality Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--quality`, `-q` | 85 | Quality threshold (0-100) |
-| `--max-iterations` | 4 | Maximum refinement iterations |
-| `--strict` | false | Fail if any file doesn't meet threshold |
+| `--quality <0-100>` | 85 | Quality threshold |
+| `--max-iterations <n>` | 4 | Maximum refinement iterations |
+
+### File Selection
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--include <patterns>` | `*.md,*.markdown` | File patterns to include (comma-separated) |
+| `--exclude <patterns>` | none | File patterns to exclude (comma-separated) |
 
 ### Processing Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--concurrency`, `-c` | 3 | Parallel file processing |
-| `--continue-on-error` | false | Skip failed files |
+| `--parallel <n>` | 3 | Parallel file processing |
+| `--chunk-size <tokens>` | 1024 | Max tokens per chunk |
+| `--no-cache` | false | Disable translation cache |
 
 ### Output Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--overwrite` | false | Overwrite existing files |
-| `--dry-run` | false | Show what would be done |
-| `--preserve-structure` | true | Maintain directory structure |
+| `-f, --format <fmt>` | auto | Force output format (md\|html\|txt) |
+| `--dry-run` | false | Show what would be translated |
+| `--json` | false | Output results as JSON |
+| `-v, --verbose` | false | Enable verbose logging |
+| `-q, --quiet` | false | Suppress non-error output |
 
 ## Examples
 
@@ -62,70 +71,68 @@ llm-translate dir <input> <output> [options]
 
 ```bash
 # Translate all markdown files
-llm-translate dir ./docs ./docs-ko --target ko
+llm-translate dir ./docs ./docs-ko -t ko
 
 # With glossary
-llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
+llm-translate dir ./docs ./docs-ko -t ko -g glossary.json
 ```
 
 ### File Selection
 
 ```bash
-# Only markdown files
-llm-translate dir ./docs ./docs-ko --target ko --pattern "**/*.md"
+# Custom include pattern
+llm-translate dir ./docs ./docs-ko -t ko --include "**/*.md"
 
-# Markdown and HTML
-llm-translate dir ./docs ./docs-ko --target ko --pattern "**/*.{md,html}"
+# Multiple patterns
+llm-translate dir ./docs ./docs-ko -t ko --include "*.md,*.markdown,*.mdx"
 
 # Exclude certain directories
-llm-translate dir ./docs ./docs-ko --target ko \
-  --exclude "**/node_modules/**" \
-  --exclude "**/dist/**"
+llm-translate dir ./docs ./docs-ko -t ko \
+  --exclude "node_modules/**,dist/**,drafts/**"
 ```
 
 ### Parallel Processing
 
 ```bash
 # Process 5 files in parallel
-llm-translate dir ./docs ./docs-ko --target ko --concurrency 5
+llm-translate dir ./docs ./docs-ko -t ko --parallel 5
 
-# Sequential (for rate limit sensitive APIs)
-llm-translate dir ./docs ./docs-ko --target ko --concurrency 1
+# Sequential processing (for rate-limited APIs)
+llm-translate dir ./docs ./docs-ko -t ko --parallel 1
 ```
 
-### Error Handling
+### Quality Settings
 
 ```bash
-# Continue even if some files fail
-llm-translate dir ./docs ./docs-ko --target ko --continue-on-error
+# High quality for important docs
+llm-translate dir ./docs ./docs-ko -t ko --quality 95 --max-iterations 6
 
-# Strict mode: fail on any quality issue
-llm-translate dir ./docs ./docs-ko --target ko --strict
+# Faster processing with lower threshold
+llm-translate dir ./docs ./docs-ko -t ko --quality 70 --max-iterations 2
 ```
 
 ### Preview Mode
 
 ```bash
 # Show what would be translated
-llm-translate dir ./docs ./docs-ko --target ko --dry-run
+llm-translate dir ./docs ./docs-ko -t ko --dry-run
 ```
 
 Output:
 ```
-Dry run - no files will be modified
+Dry run mode - no translation will be performed
 
 Files to translate:
-  docs/getting-started.md → docs-ko/getting-started.md
-  docs/guide/setup.md → docs-ko/guide/setup.md
-  docs/api/reference.md → docs-ko/api/reference.md
+  getting-started.md → docs-ko/getting-started.md
+  guide/setup.md → docs-ko/guide/setup.md
+  api/reference.md → docs-ko/api/reference.md
 
-Total: 3 files
-Estimated cost: $0.15 - $0.25
+Total: 3 file(s)
 ```
 
 ## Output Structure
 
-### Default (Preserve Structure)
+Directory structure is preserved by default:
 
 ```
 Input:                     Output:
@@ -138,95 +145,95 @@ docs/                      docs-ko/
     └── reference.md           └── reference.md
 ```
 
-### Flat Structure
-
-```bash
-llm-translate dir ./docs ./docs-ko --target ko --no-preserve-structure
-```
-
-```
-Input:                     Output:
-docs/                      docs-ko/
-├── getting-started.md     ├── getting-started.md
-├── guide/                 ├── guide-setup.md
-│   └── setup.md           └── api-reference.md
-└── api/
-    └── reference.md
-```
-
 ## Progress Reporting
 
 ### Normal Mode
 
 ```
-Translating docs → docs-ko (ko)
-[1/5] docs/getting-started.md ✓ (92/85)
-[2/5] docs/guide/setup.md ✓ (88/85)
-[3/5] docs/guide/advanced.md ✓ (91/85)
-[4/5] docs/api/reference.md ✓ (87/85)
-[5/5] docs/api/types.md ✓ (90/85)
+ℹ Found 5 file(s) to translate
+ℹ Input: ./docs
+ℹ Output: ./docs-ko
+ℹ Target language: ko
+ℹ Parallel processing: 3 file(s) at a time
+[1/5] getting-started.md ✓
+[2/5] guide/setup.md ✓
+[3/5] guide/advanced.md ✓
+[4/5] api/reference.md ✓
+[5/5] api/types.md ✓
 
-✓ Completed 5/5 files
-  Average quality: 89.6
-  Total time: 45s
-  Total cost: ~$0.18
+────────────────────────────────────────────────────────
+  Translation Summary
+────────────────────────────────────────────────────────
+  Files:      5 succeeded, 0 failed
+  Duration:   45.2s
+  Tokens:     12,450 input / 8,320 output
+  Cache:      5,200 read / 2,100 write
+────────────────────────────────────────────────────────
 ```
 
-### With Errors
+### JSON Output
 
+```bash
+llm-translate dir ./docs ./docs-ko -t ko --json
 ```
-Translating docs → docs-ko (ko)
-[1/5] docs/getting-started.md ✓ (92/85)
-[2/5] docs/guide/setup.md ✗ API rate limit
-[3/5] docs/guide/advanced.md ✓ (91/85)
-[4/5] docs/api/reference.md ✓ (87/85)
-[5/5] docs/api/types.md ✓ (90/85)
 
-⚠ Completed 4/5 files (1 failed)
-  Failed:
-    - docs/guide/setup.md: API rate limit
+```json
+{
+  "success": true,
+  "totalFiles": 5,
+  "successCount": 5,
+  "failCount": 0,
+  "totalDuration": 45234,
+  "tokensUsed": {
+    "input": 12450,
+    "output": 8320,
+    "cacheRead": 5200,
+    "cacheWrite": 2100
+  },
+  "files": [...]
+}
 ```
 
 ## Best Practices
 
-### 1. Estimate First
+### 1. Preview First
 
 ```bash
-llm-translate dir ./docs ./docs-ko --target ko --dry-run
+llm-translate dir ./docs ./docs-ko -t ko --dry-run
 ```
 
-### 2. Use Appropriate Concurrency
+### 2. Use Appropriate Parallelism
 
-- Rate-limited APIs: `--concurrency 1-2`
-- High limits: `--concurrency 5-10`
-- Local (Ollama): `--concurrency 1` (model limited)
+- Rate-limited APIs: `--parallel 1-2`
+- High limits: `--parallel 5-10`
+- Local (Ollama): `--parallel 1` (model limited)
 
 ### 3. Handle Large Projects
 
 ```bash
-# Split by subdirectory
-llm-translate dir ./docs/guide ./docs-ko/guide --target ko
-llm-translate dir ./docs/api ./docs-ko/api --target ko
+# Split by subdirectory for better control
+llm-translate dir ./docs/guide ./docs-ko/guide -t ko
+llm-translate dir ./docs/api ./docs-ko/api -t ko
 ```
 
-### 4. Incremental Updates
+### 4. Leverage Caching
 
-Cache allows skipping unchanged files:
+Cache allows skipping unchanged content:
 
 ```bash
 # First run: translates all
-llm-translate dir ./docs ./docs-ko --target ko
+llm-translate dir ./docs ./docs-ko -t ko
 
-# Second run: only new/changed files
-llm-translate dir ./docs ./docs-ko --target ko
+# Second run: uses cache for unchanged content
+llm-translate dir ./docs ./docs-ko -t ko
 ```
 
-### 5. Quality by Directory
+### 5. Quality by Content Type
 
 ```bash
 # High quality for user-facing docs
-llm-translate dir ./docs/public ./docs-ko/public --target ko --quality 95
+llm-translate dir ./docs/public ./docs-ko/public -t ko --quality 95
 
 # Standard quality for internal docs
-llm-translate dir ./docs/internal ./docs-ko/internal --target ko --quality 80
+llm-translate dir ./docs/internal ./docs-ko/internal -t ko --quality 80
 ```

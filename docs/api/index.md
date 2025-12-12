@@ -5,13 +5,13 @@ llm-translate can be used programmatically in your Node.js applications.
 ## Installation
 
 ```bash
-npm install llm-translate
+npm install @llm-translate/cli
 ```
 
 ## Quick Start
 
 ```typescript
-import { TranslationEngine, createClaudeProvider } from 'llm-translate';
+import { TranslationEngine, createClaudeProvider } from '@llm-translate/cli';
 
 // Create provider
 const provider = createClaudeProvider({
@@ -37,7 +37,7 @@ console.log(result.metadata);
 
 ## Core Classes
 
-### [TranslationEngine](/api/engine)
+### [TranslationEngine](./engine)
 
 Main entry point for translation operations.
 
@@ -47,7 +47,7 @@ await engine.translateFile({ input, output, targetLang });
 await engine.translateContent(content, options);
 ```
 
-### [TranslationAgent](/api/agent)
+### [TranslationAgent](./agent)
 
 Low-level translation agent with Self-Refine loop.
 
@@ -56,7 +56,7 @@ const agent = new TranslationAgent({ provider, qualityThreshold });
 const result = await agent.translate(request);
 ```
 
-### [Providers](/api/providers)
+### [Providers](./providers)
 
 LLM provider implementations.
 
@@ -65,7 +65,7 @@ import {
   createClaudeProvider,
   createOpenAIProvider,
   createOllamaProvider,
-} from 'llm-translate';
+} from '@llm-translate/cli';
 ```
 
 ## Type Exports
@@ -92,7 +92,7 @@ import type {
   LLMProvider,
   ChatMessage,
   ChatResponse,
-} from 'llm-translate';
+} from '@llm-translate/cli';
 ```
 
 ## Utility Functions
@@ -100,7 +100,7 @@ import type {
 ### Chunking
 
 ```typescript
-import { chunkContent, chunkMarkdown } from 'llm-translate';
+import { chunkContent, chunkMarkdown } from '@llm-translate/cli';
 
 const chunks = chunkContent(text, { maxTokens: 1024 });
 const mdChunks = chunkMarkdown(markdown, { maxTokens: 1024 });
@@ -109,7 +109,7 @@ const mdChunks = chunkMarkdown(markdown, { maxTokens: 1024 });
 ### Glossary
 
 ```typescript
-import { loadGlossary, resolveGlossary, createGlossaryLookup } from 'llm-translate';
+import { loadGlossary, resolveGlossary, createGlossaryLookup } from '@llm-translate/cli';
 
 const glossary = await loadGlossary('./glossary.json');
 const resolved = resolveGlossary(glossary, 'ko');
@@ -121,7 +121,7 @@ const terms = lookup.findAll(sourceText);
 ### Token Estimation
 
 ```typescript
-import { estimateTokens, calculateTokenBudget } from 'llm-translate';
+import { estimateTokens, calculateTokenBudget } from '@llm-translate/cli';
 
 const tokens = estimateTokens(text);
 const budget = calculateTokenBudget(text, { glossaryTokens: 500 });
@@ -130,7 +130,7 @@ const budget = calculateTokenBudget(text, { glossaryTokens: 500 });
 ## Error Handling
 
 ```typescript
-import { TranslationError, ErrorCode } from 'llm-translate';
+import { TranslationError, ErrorCode } from '@llm-translate/cli';
 
 try {
   await engine.translateFile(options);

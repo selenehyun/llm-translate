@@ -5,7 +5,7 @@ Low-level translation agent implementing the Self-Refine algorithm.
 ## Constructor
 
 ```typescript
-import { TranslationAgent } from 'llm-translate';
+import { TranslationAgent } from '@llm-translate/cli';
 
 const agent = new TranslationAgent(options: TranslationAgentOptions);
 ```
@@ -112,7 +112,7 @@ async translate(request) {
 ### Basic Translation
 
 ```typescript
-import { TranslationAgent, createClaudeProvider } from 'llm-translate';
+import { TranslationAgent, createClaudeProvider } from '@llm-translate/cli';
 
 const provider = createClaudeProvider();
 const agent = new TranslationAgent({
@@ -133,7 +133,7 @@ console.log(result.metadata.qualityScore);  // 92
 ### With Glossary
 
 ```typescript
-import { loadGlossary, resolveGlossary } from 'llm-translate';
+import { loadGlossary, resolveGlossary } from '@llm-translate/cli';
 
 const glossary = await loadGlossary('./glossary.json');
 const resolved = resolveGlossary(glossary, 'ko');
@@ -168,7 +168,7 @@ const result = await agent.translate({
 ### Strict Quality Mode
 
 ```typescript
-import { TranslationError, ErrorCode } from 'llm-translate';
+import { TranslationError, ErrorCode } from '@llm-translate/cli';
 
 const agent = new TranslationAgent({
   provider,

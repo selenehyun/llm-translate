@@ -25,7 +25,7 @@ The recommended provider, with full support for prompt caching.
 ### Setup
 
 ```typescript
-import { createClaudeProvider } from 'llm-translate';
+import { createClaudeProvider } from '@llm-translate/cli';
 
 const provider = createClaudeProvider({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -89,7 +89,7 @@ console.log(response.usage);
 ### Setup
 
 ```typescript
-import { createOpenAIProvider } from 'llm-translate';
+import { createOpenAIProvider } from '@llm-translate/cli';
 
 const provider = createOpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY,
@@ -127,7 +127,7 @@ For local, self-hosted models.
 ### Setup
 
 ```typescript
-import { createOllamaProvider } from 'llm-translate';
+import { createOllamaProvider } from '@llm-translate/cli';
 
 const provider = createOllamaProvider({
   baseUrl: 'http://localhost:11434',
@@ -220,7 +220,7 @@ interface ModelInfo {
 Implement your own provider:
 
 ```typescript
-import type { LLMProvider, ChatRequest, ChatResponse } from 'llm-translate';
+import type { LLMProvider, ChatRequest, ChatResponse } from '@llm-translate/cli';
 
 class CustomProvider implements LLMProvider {
   readonly name = 'custom' as const;
@@ -278,7 +278,7 @@ class CustomProvider implements LLMProvider {
 All providers throw `TranslationError`:
 
 ```typescript
-import { TranslationError, ErrorCode } from 'llm-translate';
+import { TranslationError, ErrorCode } from '@llm-translate/cli';
 
 try {
   await provider.chat(request);

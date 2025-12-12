@@ -5,7 +5,7 @@ llm-translate provides a command-line interface for translating documents.
 ## Installation
 
 ```bash
-npm install -g llm-translate
+npm install -g @llm-translate/cli
 ```
 
 ## Global Options
@@ -22,7 +22,7 @@ These options are available for all commands:
 
 ## Commands
 
-### [file](/cli/file)
+### [file](./file)
 
 Translate a single file.
 
@@ -30,7 +30,7 @@ Translate a single file.
 llm-translate file <input> [output] [options]
 ```
 
-### [dir](/cli/dir)
+### [dir](./dir)
 
 Translate all files in a directory.
 
@@ -38,7 +38,7 @@ Translate all files in a directory.
 llm-translate dir <input> <output> [options]
 ```
 
-### [init](/cli/init)
+### [init](./init)
 
 Initialize configuration file.
 
@@ -46,7 +46,7 @@ Initialize configuration file.
 llm-translate init [options]
 ```
 
-### [glossary](/cli/glossary)
+### [glossary](./glossary)
 
 Manage glossary files.
 
@@ -108,4 +108,4 @@ Settings are applied in this order (later overrides earlier):
 3. Environment variables
 4. CLI arguments
 
-See [Configuration](/guide/configuration) for details.
+See [Configuration](../guide/configuration) for details.
