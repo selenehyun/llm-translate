@@ -23,7 +23,11 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "docs:translate": "node ./dist/cli/index.js dir ./docs ./docs/ko --target-lang ko"
   },
   "keywords": [
     "translation",
@@ -41,31 +45,32 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "ai": "^4.0.0",
     "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "ai": "^4.0.0",
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0",
     "commander": "^12.1.0",
-    "unified": "^11.0.5",
+    "cosmiconfig": "^9.0.0",
+    "ora": "^8.1.0",
+    "remark-gfm": "^4.0.0",
     "remark-parse": "^11.0.0",
     "remark-stringify": "^11.0.0",
-    "remark-gfm": "^4.0.0",
+    "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
-    "cheerio": "^1.0.0",
-    "chalk": "^5.3.0",
-    "ora": "^8.1.0",
-    "cosmiconfig": "^9.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
     "@types/node": "^22.10.1",
-    "typescript": "^5.7.2",
-    "tsup": "^8.3.5",
-    "vitest": "^2.1.8",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
     "@vitest/coverage-v8": "^2.1.8",
     "eslint": "^9.16.0",
-    "@typescript-eslint/eslint-plugin": "^8.17.0",
-    "@typescript-eslint/parser": "^8.17.0"
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitepress": "^1.6.4",
+    "vitest": "^2.1.8"
   }
 }
