@@ -38,6 +38,7 @@ export ANTHROPIC_API_KEY=sk-ant-xxxxx
 export OPENAI_API_KEY=sk-xxxxx
 
 # For Ollama (no key needed, just ensure server is running)
+# See the Ollama guide for setup: ./ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
@@ -142,3 +143,4 @@ After translation, you'll see:
 - [Set up a glossary](./glossary) for consistent terminology
 - [Understand quality control](./quality-control) and tuning
 - [Optimize costs](./cost-optimization) for large projects
+- [Run locally with Ollama](./ollama) for private, offline translation

@@ -75,6 +75,10 @@ export class TranslationEngine {
       this.provider = options.provider;
     } else {
       const providerConfig = getProviderConfigFromEnv(this.config.provider.default);
+      // Use model from config if specified (CLI --model option)
+      if (this.config.provider.model) {
+        providerConfig.defaultModel = this.config.provider.model;
+      }
       this.provider = getProvider(this.config.provider.default, providerConfig);
     }
 

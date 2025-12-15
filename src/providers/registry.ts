@@ -2,6 +2,8 @@ import type { ProviderName } from '../types/index.js';
 import type { LLMProvider, ProviderConfig, ProviderFactory } from './interface.js';
 import { TranslationError, ErrorCode } from '../errors.js';
 import { createClaudeProvider } from './claude.js';
+import { createOpenAIProvider } from './openai.js';
+import { createOllamaProvider } from './ollama.js';
 
 // ============================================================================
 // Provider Registry
@@ -61,7 +63,7 @@ export function getProviderConfigFromEnv(name: ProviderName): ProviderConfig {
     case 'ollama':
       return {
         baseUrl: process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434',
-        defaultModel: 'llama2',
+        defaultModel: 'llama3.2', // Better multilingual support than llama2
       };
 
     case 'custom':
@@ -90,10 +92,30 @@ export interface CreateProviderOptions {
 // ============================================================================
 
 registerProvider('claude', createClaudeProvider);
+registerProvider('openai', createOpenAIProvider);
+registerProvider('ollama', createOllamaProvider);
 
 // ============================================================================
 // Create Provider with Fallback
 // ============================================================================
+
+/**
+ * Check if a provider can be used (has required credentials)
+ * Ollama doesn't require an API key, only a running server
+ */
+function canUseProvider(name: ProviderName, config: ProviderConfig): boolean {
+  if (!hasProvider(name)) {
+    return false;
+  }
+
+  // Ollama doesn't require an API key
+  if (name === 'ollama') {
+    return true;
+  }
+
+  // Other providers require an API key
+  return !!config.apiKey;
+}
 
 export function createProviderWithFallback(
   options: CreateProviderOptions
@@ -106,7 +128,7 @@ export function createProviderWithFallback(
     ...config[primary],
   };
 
-  if (hasProvider(primary) && primaryConfig.apiKey) {
+  if (canUseProvider(primary, primaryConfig)) {
     return getProvider(primary, primaryConfig);
   }
 
@@ -117,7 +139,7 @@ export function createProviderWithFallback(
       ...config[fallbackName],
     };
 
-    if (hasProvider(fallbackName) && fallbackConfig.apiKey) {
+    if (canUseProvider(fallbackName, fallbackConfig)) {
       return getProvider(fallbackName, fallbackConfig);
     }
   }

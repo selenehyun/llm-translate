@@ -63,7 +63,7 @@ ${styleSection}Previous content: ${context?.previousContext ?? "None"}
 ## Source Text:
 ${sourceText}
 
-## Translation:`;
+Provide ONLY the translated text below, with no additional commentary or headers:`;
 }
 
 /**
@@ -139,7 +139,7 @@ ${styleSection}Previous content: ${context?.previousContext ?? "None"}
 ## Source Text:
 ${sourceText}
 
-## Translation:`;
+Provide ONLY the translated text below, with no additional commentary or headers:`;
 }
 
 function buildReflectionPrompt(
@@ -190,7 +190,7 @@ ${suggestions}
 ## Glossary (MUST apply):
 ${glossaryText || "No glossary provided."}
 
-Provide only the improved translation, nothing else:`;
+Provide ONLY the improved translation below, with no additional commentary or headers:`;
 }
 
 function buildQualityEvaluationPrompt(
@@ -476,9 +476,10 @@ export class TranslationAgent {
     }
 
     const response = await this.provider.chat({ messages });
+    const cleanedContent = this.cleanTranslationOutput(response.content);
 
     return {
-      content: this.preserveWhitespace(sourceText, response.content.trim()),
+      content: this.preserveWhitespace(sourceText, cleanedContent),
       usage: {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
@@ -547,7 +548,7 @@ ${currentTranslation}
 ## Improvement Suggestions:
 ${suggestions}
 
-Provide only the improved translation, nothing else:`,
+Provide ONLY the improved translation below, with no additional commentary or headers:`,
         },
       ];
       messages = [{ role: "user", content: contentParts }];
@@ -562,9 +563,10 @@ Provide only the improved translation, nothing else:`,
     }
 
     const response = await this.provider.chat({ messages });
+    const cleanedContent = this.cleanTranslationOutput(response.content);
 
     return {
-      content: this.preserveWhitespace(sourceText, response.content.trim()),
+      content: this.preserveWhitespace(sourceText, cleanedContent),
       usage: {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
@@ -627,6 +629,40 @@ Provide only the improved translation, nothing else:`,
         issues: ["Failed to parse quality evaluation response"],
       };
     }
+  }
+
+  /**
+   * Clean up translation output by removing prompt artifacts
+   * Uses guardrails to detect and remove any trailing prompt-like content
+   */
+  private cleanTranslationOutput(text: string): string {
+    let cleaned = text.trim();
+
+    // Guardrail 1: Remove trailing markdown headers that look like prompt sections
+    // These are likely prompt artifacts, not actual translation content
+    const trailingHeaderPattern = /\n+##\s+[A-Z][^:\n]*:\s*$/;
+    cleaned = cleaned.replace(trailingHeaderPattern, '');
+
+    // Guardrail 2: If the text ends with a colon followed by optional whitespace,
+    // it's likely an incomplete prompt artifact
+    const incompletePromptPattern = /:\s*$/;
+    if (incompletePromptPattern.test(cleaned)) {
+      // Find the last complete line/paragraph
+      const lines = cleaned.split('\n');
+      while (lines.length > 0 && incompletePromptPattern.test(lines[lines.length - 1]?.trim() ?? '')) {
+        lines.pop();
+      }
+      cleaned = lines.join('\n');
+    }
+
+    // Guardrail 3: Remove any trailing numbered list items that look like evaluation criteria
+    // (typically starts with "1. **" pattern for bold evaluation headers)
+    const evaluationListPattern = /\n+\d+\.\s*\*\*[^*]+\*\*[\s\S]*$/;
+    if (evaluationListPattern.test(cleaned)) {
+      cleaned = cleaned.replace(evaluationListPattern, '');
+    }
+
+    return cleaned.trim();
   }
 
   /**

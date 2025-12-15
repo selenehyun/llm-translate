@@ -76,81 +76,59 @@ llm-translate file doc.md --target ko --provider openai --model gpt-4o
 
 ## Ollama
 
-Local, self-hosted LLMs for privacy or offline use.
+Local, self-hosted LLMs for privacy or offline use. No API keys required.
 
-### Setup
-
-1. Install Ollama:
+### Quick Setup
 
 ```bash
-# macOS
+# 1. Install (macOS)
 brew install ollama
 
-# Linux
-curl -fsSL https://ollama.ai/install.sh | sh
-```
+# 2. Pull GPT-OSS 20B (recommended)
+ollama pull gpt-oss:20b
 
-2. Pull a model:
-
-```bash
-ollama pull llama3.1
-```
-
-3. Start the server:
-
-```bash
-ollama serve
-```
-
-### Usage
-
-```bash
-export OLLAMA_BASE_URL=http://localhost:11434
-
-llm-translate file doc.md --target ko --provider ollama --model llama3.1
+# 3. Translate
+llm-translate file doc.md --target ko --provider ollama
 ```
 
 ### Recommended Models
 
-| Model | Parameters | Quality | Speed |
-|-------|-----------|---------|-------|
-| llama3.1 | 8B | Good | Fast |
-| llama3.1:70b | 70B | Excellent | Slow |
-| mistral | 7B | Good | Fast |
-| mixtral | 8x7B | Very Good | Medium |
-
-### Limitations
-
-- No prompt caching (higher costs for large docs)
-- Quality depends on model
-- Requires local GPU for good performance
-- Limited language support in some models
+| Model | RAM | Quality | Best For |
+|-------|-----|---------|----------|
+| `gpt-oss:20b` | 16GB | Excellent | **Best quality (recommended)** |
+| `qwen2.5:3b` | 3GB | Good | Lightweight + 29 languages |
+| `qwen2.5:7b` | 6GB | Very Good | Multilingual priority |
+| `llama3.2` | 4GB | Good | English-centric docs |
 
 ### When to Use
 
 - Sensitive/private documents
 - Offline environments
 - Cost optimization (no API fees)
-- Experimentation
+- Need chain-of-thought visibility (GPT-OSS)
+
+::: tip Full Guide
+See [Local Translation with Ollama](./ollama) for complete setup instructions, GPU optimization, troubleshooting, and advanced configuration.
+:::
 
 ## Provider Comparison
 
 ### Quality
 
 ```
-Opus > Sonnet ≈ GPT-4o > Haiku ≈ GPT-4o-mini > Llama3.1
+Opus > Sonnet ≈ GPT-4o ≈ GPT-OSS-20B > Haiku ≈ GPT-4o-mini > Qwen2.5
 ```
 
 ### Cost (per 1M tokens)
 
 ```
-Ollama ($0) < Haiku ($1) < GPT-4o-mini ($0.15) < Sonnet ($3) < GPT-4o ($2.5) < Opus ($15)
+Ollama/GPT-OSS ($0) < GPT-4o-mini ($0.15) < Haiku ($1) < GPT-4o ($2.5) < Sonnet ($3) < Opus ($15)
 ```
 
 ### Speed
 
 ```
-Haiku ≈ GPT-4o-mini > Sonnet ≈ GPT-4o > Opus > Ollama (varies)
+Haiku ≈ GPT-4o-mini > Sonnet ≈ GPT-4o > Opus > GPT-OSS-20B (with GPU)
 ```
 
 ## Switching Providers
