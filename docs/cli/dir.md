@@ -1,5 +1,9 @@
 # llm-translate dir
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Translate all files in a directory.
 
 ## Synopsis
@@ -21,7 +25,7 @@ llm-translate dir <input> <output> [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `-s, --source-lang <lang>` | auto-detect | Source language code |
+| `-s, --source-lang <lang>` | config default | Source language code |
 | `-t, --target-lang <lang>` | required | Target language code |
 
 ### Translation Options
@@ -71,23 +75,23 @@ llm-translate dir <input> <output> [options]
 
 ```bash
 # Translate all markdown files
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # With glossary
-llm-translate dir ./docs ./docs-ko -t ko -g glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko -g glossary.json
 ```
 
 ### File Selection
 
 ```bash
 # Custom include pattern
-llm-translate dir ./docs ./docs-ko -t ko --include "**/*.md"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "**/*.md"
 
 # Multiple patterns
-llm-translate dir ./docs ./docs-ko -t ko --include "*.md,*.markdown,*.mdx"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "*.md,*.markdown,*.mdx"
 
 # Exclude certain directories
-llm-translate dir ./docs ./docs-ko -t ko \
+llm-translate dir ./docs ./docs-ko -s en -t ko \
   --exclude "node_modules/**,dist/**,drafts/**"
 ```
 
@@ -95,27 +99,27 @@ llm-translate dir ./docs ./docs-ko -t ko \
 
 ```bash
 # Process 5 files in parallel
-llm-translate dir ./docs ./docs-ko -t ko --parallel 5
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 5
 
 # Sequential processing (for rate-limited APIs)
-llm-translate dir ./docs ./docs-ko -t ko --parallel 1
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 1
 ```
 
 ### Quality Settings
 
 ```bash
 # High quality for important docs
-llm-translate dir ./docs ./docs-ko -t ko --quality 95 --max-iterations 6
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 95 --max-iterations 6
 
 # Faster processing with lower threshold
-llm-translate dir ./docs ./docs-ko -t ko --quality 70 --max-iterations 2
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 70 --max-iterations 2
 ```
 
 ### Preview Mode
 
 ```bash
 # Show what would be translated
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 Output:
@@ -199,7 +203,7 @@ llm-translate dir ./docs ./docs-ko -t ko --json
 ### 1. Preview First
 
 ```bash
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 ### 2. Use Appropriate Parallelism
@@ -212,8 +216,8 @@ llm-translate dir ./docs ./docs-ko -t ko --dry-run
 
 ```bash
 # Split by subdirectory for better control
-llm-translate dir ./docs/guide ./docs-ko/guide -t ko
-llm-translate dir ./docs/api ./docs-ko/api -t ko
+llm-translate dir ./docs/guide ./docs-ko/guide -s en -t ko
+llm-translate dir ./docs/api ./docs-ko/api -s en -t ko
 ```
 
 ### 4. Leverage Caching
@@ -222,18 +226,18 @@ Cache allows skipping unchanged content:
 
 ```bash
 # First run: translates all
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Second run: uses cache for unchanged content
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 ```
 
 ### 5. Quality by Content Type
 
 ```bash
 # High quality for user-facing docs
-llm-translate dir ./docs/public ./docs-ko/public -t ko --quality 95
+llm-translate dir ./docs/public ./docs-ko/public -s en -t ko --quality 95
 
 # Standard quality for internal docs
-llm-translate dir ./docs/internal ./docs-ko/internal -t ko --quality 80
+llm-translate dir ./docs/internal ./docs-ko/internal -s en -t ko --quality 80
 ```

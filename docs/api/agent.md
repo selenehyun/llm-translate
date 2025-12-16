@@ -1,5 +1,9 @@
 # TranslationAgent
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Low-level translation agent implementing the Self-Refine algorithm.
 
 ## Constructor

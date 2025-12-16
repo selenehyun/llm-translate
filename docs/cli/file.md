@@ -1,5 +1,9 @@
 # llm-translate file
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Translate a single file.
 
 ## Synopsis
@@ -21,17 +25,18 @@ llm-translate file <input> [output] [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--source`, `-s` | auto-detect | Source language code |
-| `--target`, `-t` | required | Target language code |
+| `--source-lang`, `-s` | required | Source language code |
+| `--target-lang`, `-t` | required | Target language code |
 | `--glossary`, `-g` | none | Path to glossary file |
 
 ### Quality Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--quality`, `-q` | 85 | Quality threshold (0-100) |
+| `--quality` | 85 | Quality threshold (0-100) |
 | `--max-iterations` | 4 | Maximum refinement iterations |
-| `--strict` | false | Fail if threshold not met |
+| `--strict-quality` | false | Fail if threshold not met |
+| `--strict-glossary` | false | Fail if glossary terms not applied |
 
 ### Provider Options
 
@@ -44,30 +49,34 @@ llm-translate file <input> [output] [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--output`, `-o` | stdout | Output file path |
-| `--overwrite` | false | Overwrite existing output |
+| `--output`, `-o` | auto | Output file path |
+| `--format`, `-f` | auto | Force output format (md\|html\|txt) |
 | `--dry-run` | false | Show what would be done |
+| `--json` | false | Output results as JSON |
+| `--verbose`, `-v` | false | Enable verbose logging |
+| `--quiet`, `-q` | false | Suppress non-error output |
 
 ### Advanced Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--no-cache` | false | Disable prompt caching |
+| `--no-cache` | false | Disable translation cache |
 | `--chunk-size` | 1024 | Max tokens per chunk |
+| `--context` | none | Additional context for translation |
 
 ## Examples
 
 ### Basic Usage
 
 ```bash
-# Translate to Korean, output to stdout
-llm-translate file README.md --target ko
+# Translate to Korean
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate to file
-llm-translate file README.md -o README.ko.md --target ko
+# With explicit output path
+llm-translate file README.md --output README.ko.md --source-lang en --target-lang ko
 
-# Specify source language
-llm-translate file doc.md -o doc.ja.md --source en --target ja
+# Specify source and target languages
+llm-translate file doc.md -o doc.ja.md --source-lang en --target-lang ja
 ```
 
 ### With Glossary
@@ -75,7 +84,7 @@ llm-translate file doc.md -o doc.ja.md --source en --target ja
 ```bash
 # Use glossary for consistent terminology
 llm-translate file api-docs.md -o api-docs.ko.md \
-  --target ko \
+  -s en -t ko \
   --glossary glossary.json
 ```
 
@@ -84,15 +93,16 @@ llm-translate file api-docs.md -o api-docs.ko.md \
 ```bash
 # Higher quality threshold
 llm-translate file important.md -o important.ko.md \
-  --target ko \
+  -s en -t ko \
   --quality 95 \
   --max-iterations 6
 
 # Strict mode (fail if not met)
 llm-translate file legal.md -o legal.ko.md \
-  --target ko \
+  --source-lang en \
+  --target-lang ko \
   --quality 95 \
-  --strict
+  --strict-quality
 ```
 
 ### Provider Selection
@@ -100,13 +110,13 @@ llm-translate file legal.md -o legal.ko.md \
 ```bash
 # Use Claude Sonnet
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider claude \
   --model claude-sonnet-4-5-20250929
 
 # Use OpenAI
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider openai \
   --model gpt-4o
 ```
@@ -114,11 +124,11 @@ llm-translate file doc.md -o doc.ko.md \
 ### From stdin
 
 ```bash
-# Pipe content
-cat doc.md | llm-translate file - --target ko > doc.ko.md
+# Pipe content (uses stdin mode when no TTY)
+cat doc.md | llm-translate -s en -t ko > doc.ko.md
 
 # Use with other tools
-curl https://example.com/doc.md | llm-translate file - --target ko
+curl https://example.com/doc.md | llm-translate -s en -t ko
 ```
 
 ## Output Format
@@ -181,15 +191,15 @@ Common language codes:
 ### File Not Found
 
 ```bash
-$ llm-translate file missing.md --target ko
-Error: File not found: missing.md
+$ llm-translate file missing.md -s en -t ko
+Error: Could not read file 'missing.md'
 Exit code: 3
 ```
 
 ### Quality Not Met (Strict Mode)
 
 ```bash
-$ llm-translate file doc.md -o doc.ko.md --target ko --quality 99 --strict
+$ llm-translate file doc.md -o doc.ko.md -s en -t ko --quality 99 --strict-quality
 Error: Quality threshold not met: 94/99
 Exit code: 4
 ```

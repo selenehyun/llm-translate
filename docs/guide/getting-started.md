@@ -1,5 +1,9 @@
 # Getting Started
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 ## Installation
 
 ### npm (Recommended)
@@ -72,10 +76,10 @@ This creates a `.translaterc.json` file with default settings:
 
 ```bash
 # Translate a markdown file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate with source language specified
-llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
+# Using long option names
+llm-translate file docs/guide.md -o docs/guide.ja.md --source-lang en --target-lang ja
 ```
 
 ### Using a Glossary
@@ -107,7 +111,7 @@ llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
 2. Translate with glossary:
 
 ```bash
-llm-translate file README.md -o README.ko.md --target ko --glossary glossary.json
+llm-translate file README.md -o README.ko.md -s en -t ko --glossary glossary.json
 ```
 
 ### Batch Translation
@@ -115,7 +119,7 @@ llm-translate file README.md -o README.ko.md --target ko --glossary glossary.jso
 Translate an entire directory:
 
 ```bash
-llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko --glossary glossary.json
 ```
 
 ## Understanding the Output

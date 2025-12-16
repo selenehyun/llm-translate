@@ -1,5 +1,9 @@
 # TranslationEngine
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 The main entry point for translation operations.
 
 ## Constructor

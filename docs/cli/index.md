@@ -1,5 +1,9 @@
 # CLI Reference
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate provides a command-line interface for translating documents.
 
 ## Installation
@@ -58,20 +62,20 @@ llm-translate glossary <subcommand> [options]
 
 ```bash
 # Translate a file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
 # Translate with glossary
 llm-translate file docs/guide.md -o docs/guide.ja.md \
-  --target ja --glossary glossary.json
+  -s en -t ja --glossary glossary.json
 
 # Batch translate a directory
-llm-translate dir ./docs ./docs-ko --target ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Initialize config
 llm-translate init --provider claude
 
 # Validate glossary
-llm-translate glossary validate --glossary glossary.json
+llm-translate glossary validate glossary.json
 ```
 
 ## Exit Codes
@@ -93,10 +97,6 @@ llm-translate glossary validate --glossary glossary.json
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 OPENAI_API_KEY=sk-xxxxx
 OLLAMA_BASE_URL=http://localhost:11434
-
-# Defaults
-LLM_TRANSLATE_PROVIDER=claude
-LLM_TRANSLATE_MODEL=claude-haiku-4-5-20251001
 ```
 
 ## Configuration Priority

@@ -1,6 +1,20 @@
 # Local Translation with Ollama
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Run llm-translate completely offline using Ollama. No API keys required, complete privacy for sensitive documents.
+
+::: warning Quality Varies by Model
+Ollama translation quality is **highly dependent on model selection**. For reliable translation results:
+
+- **Minimum**: 14B+ parameter models (e.g., `qwen2.5:14b`, `llama3.1:8b`)
+- **Recommended**: 32B+ models (e.g., `qwen2.5:32b`, `llama3.3:70b`)
+- **Not recommended**: Models under 7B produce inconsistent and often unusable translations
+
+Smaller models (3B, 7B) may work for simple content but frequently fail on technical documentation, produce incomplete outputs, or ignore formatting instructions.
+:::
 
 ## Why Ollama?
 
@@ -11,15 +25,15 @@ Run llm-translate completely offline using Ollama. No API keys required, complet
 
 ## System Requirements
 
-### Minimum (GPT-OSS 20B)
+### Minimum (14B models)
 
-- **RAM**: 16GB (for GPT-OSS 20B)
+- **RAM**: 16GB (for 14B models like qwen2.5:14b)
 - **Storage**: 20GB free space
 - **CPU**: Modern multi-core processor
 
 ### Recommended
 
-- **RAM**: 32GB+ (for larger models like GPT-OSS 120B)
+- **RAM**: 32GB+ (for larger models like qwen2.5:32b)
 - **GPU**: NVIDIA with 16GB+ VRAM or Apple Silicon (M2/M3/M4)
 - **Storage**: 100GB+ for multiple models
 
@@ -88,46 +102,30 @@ On macOS and Windows, Ollama starts automatically as a background service after 
 ### 2. Download a Model
 
 ```bash
-# Recommended: OpenAI's GPT-OSS 20B (best quality for local)
-ollama pull gpt-oss:20b
+# Recommended: Qwen 2.5 14B (best multilingual support for local)
+ollama pull qwen2.5:14b
 
-# Alternative: Llama 3.2 (lighter, good multilingual support)
+# Alternative: Llama 3.2 (lighter, good for English-centric docs)
 ollama pull llama3.2
 ```
 
 ### 3. Translate
 
 ```bash
-# Basic translation with GPT-OSS 20B
-llm-translate file README.md -o README.ko.md --target ko --provider ollama
+# Basic translation with qwen2.5:14b
+llm-translate file README.md -o README.ko.md -s en -t ko --provider ollama --model qwen2.5:14b
 
 # With specific model
-llm-translate file doc.md --target ja --provider ollama --model gpt-oss:20b
+llm-translate file doc.md -s en -t ja --provider ollama --model qwen2.5:14b
 ```
 
-::: tip GPT-OSS 20B
-OpenAI's first open-weight model since GPT-2. It offers excellent quality with full chain-of-thought visibility, function calling, and runs on 16GB RAM. [Learn more](https://github.com/openai/gpt-oss)
+::: tip Qwen 2.5 for Translation
+Qwen 2.5 supports 29 languages including Korean, Japanese, Chinese, and all major European languages. The 14B version offers excellent quality for translation tasks while running on 16GB RAM.
 :::
 
 ## Recommended Models for Translation
 
-### GPT-OSS (Recommended)
-
-OpenAI's open-weight models, offering the best quality for local translation.
-
-| Model | Parameters | Download | RAM | Context | Quality |
-|-------|-----------|----------|-----|---------|---------|
-| `gpt-oss:20b` | 21B (3.6B active) | 14GB | 16GB | 128K | Excellent |
-| `gpt-oss:120b` | 117B (5.1B active) | 65GB | 80GB | 128K | Outstanding |
-
-**Key Features:**
-- Full chain-of-thought visibility for debugging
-- Configurable reasoning effort (low/medium/high)
-- Native function calling and tool support
-- Apache 2.0 license (commercial use OK)
-- MXFP4 quantization for efficient memory usage
-
-### Best Quality (Other Options)
+### Best Quality (32B+)
 
 | Model | Size | VRAM | Languages | Quality |
 |-------|------|------|-----------|---------|
@@ -165,21 +163,16 @@ Qwen2.5 supports 29 languages including Korean, Japanese, Chinese, and all major
 # List available models
 ollama list
 
-# GPT-OSS (best quality)
-ollama pull gpt-oss:20b
-ollama pull gpt-oss:120b  # if you have 80GB+ VRAM
+# Recommended for translation (14B+)
+ollama pull qwen2.5:14b   # Best multilingual (29 languages)
+ollama pull qwen2.5:32b   # Higher quality, needs 32GB RAM
+ollama pull llama3.1:8b   # Good quality, lighter
 
-# Lightweight with best language support
-ollama pull qwen2.5:3b    # balanced (recommended for low-resource)
-ollama pull qwen2.5:7b    # better quality
-ollama pull gemma3:4b     # translation-optimized
-
-# Ultra-lightweight
-ollama pull qwen2.5:1.5b  # 2GB RAM
-ollama pull qwen2.5:0.5b  # 1GB RAM
+# Lightweight options (may have quality issues)
+ollama pull qwen2.5:7b    # Better quality than 3B
+ollama pull llama3.2      # Good for English-centric docs
 
 # Other options
-ollama pull llama3.2
 ollama pull mistral-nemo
 ```
 
@@ -201,18 +194,18 @@ export OLLAMA_BASE_URL=http://192.168.1.100:11434
 {
   "provider": {
     "name": "ollama",
-    "model": "gpt-oss:20b",
+    "model": "qwen2.5:14b",
     "baseUrl": "http://localhost:11434"
   },
   "translation": {
-    "qualityThreshold": 85,
+    "qualityThreshold": 75,
     "maxIterations": 3
   }
 }
 ```
 
 ::: tip
-GPT-OSS 20B achieves quality comparable to cloud APIs, so you can use higher `qualityThreshold` (85) compared to other local models.
+For local models, a lower `qualityThreshold` (75) is recommended to avoid excessive refinement iterations. Use 14B+ models for reliable results.
 :::
 
 ### Model-Specific Settings
@@ -220,28 +213,28 @@ GPT-OSS 20B achieves quality comparable to cloud APIs, so you can use higher `qu
 For different document types:
 
 ```bash
-# Best quality - GPT-OSS 20B (recommended for most use cases)
-llm-translate file api-spec.md --target ko \
+# Best quality - qwen2.5:14b (recommended for most use cases)
+llm-translate file api-spec.md -s en -t ko \
   --provider ollama \
-  --model gpt-oss:20b \
-  --quality 85
-
-# Enterprise/Critical docs - GPT-OSS 120B (requires 80GB VRAM)
-llm-translate file legal-doc.md --target ko \
-  --provider ollama \
-  --model gpt-oss:120b \
-  --quality 90
-
-# README files - lighter model for simple content
-llm-translate file README.md --target ko \
-  --provider ollama \
-  --model llama3.2 \
+  --model qwen2.5:14b \
   --quality 75
 
-# Large documentation sets - balance speed and quality
-llm-translate dir ./docs ./docs-ko --target ko \
+# Higher quality with 32B model (requires 32GB RAM)
+llm-translate file legal-doc.md -s en -t ko \
   --provider ollama \
-  --model gpt-oss:20b \
+  --model qwen2.5:32b \
+  --quality 80
+
+# README files - lighter model for simple content
+llm-translate file README.md -s en -t ko \
+  --provider ollama \
+  --model llama3.2 \
+  --quality 70
+
+# Large documentation sets - balance speed and quality
+llm-translate dir ./docs ./docs-ko -s en -t ko \
+  --provider ollama \
+  --model qwen2.5:14b \
   --parallel 2
 ```
 
@@ -454,43 +447,44 @@ llm-translate file doc.md --target ko \
 
 ## Comparison: Cloud vs Local
 
-| Aspect | Cloud (Claude/OpenAI) | Local (GPT-OSS 20B) |
-|--------|----------------------|---------------------|
+| Aspect | Cloud (Claude/OpenAI) | Local (Ollama) |
+|--------|----------------------|----------------|
 | **Privacy** | Data sent to servers | Fully private |
 | **Cost** | Per-token pricing | Free after setup |
-| **Quality** | Excellent | Excellent (comparable) |
-| **Speed** | Fast | Fast with GPU |
+| **Quality** | Excellent | Good to Very Good (model dependent) |
+| **Speed** | Fast | Varies with hardware |
 | **Offline** | No | Yes |
 | **Setup** | API key only | Install + download model |
-| **Context** | 200K (Claude) | 128K |
+| **Context** | 200K (Claude) | 32K-128K |
 
-::: info GPT-OSS Advantage
-With GPT-OSS 20B, the quality gap between cloud and local translation has significantly narrowed. For most documents, you can expect results comparable to GPT-4o while keeping data completely private.
+::: info Local Translation Considerations
+Local models (14B+) can produce good translation results but may not match cloud API quality for complex or nuanced content. Use larger models (32B+) for better results.
 :::
 
-### When to Use Ollama + GPT-OSS
+### When to Use Ollama
 
 - Sensitive/confidential documents
 - Air-gapped environments
 - High-volume translation (cost savings)
 - Privacy-conscious organizations
-- When you need chain-of-thought visibility
+- Simple to moderate complexity documents
 
 ### When to Use Cloud APIs
 
 - Need for prompt caching (Claude - 90% cost reduction)
 - Limited local hardware (< 16GB RAM)
-- Need 200K+ context window
+- Need highest quality translations
+- Complex technical or legal documents
 - Occasional/low-volume translation
 
 ## Advanced: Custom Models
 
 ### Creating a Translation-Optimized Model
 
-Create a `Modelfile` based on GPT-OSS:
+Create a `Modelfile` based on Qwen:
 
 ```dockerfile
-FROM gpt-oss:20b
+FROM qwen2.5:14b
 
 PARAMETER temperature 0.3
 PARAMETER num_ctx 32768
@@ -511,19 +505,7 @@ Build and use:
 ollama create translator -f Modelfile
 
 # Use for translation
-llm-translate file doc.md --target ko --provider ollama --model translator
-```
-
-### Adjusting Reasoning Effort
-
-GPT-OSS supports configurable reasoning effort. For translation tasks:
-
-```bash
-# Default reasoning (balanced)
-ollama run gpt-oss:20b
-
-# Lower effort for faster simple translations
-# (set via environment or API parameters)
+llm-translate file doc.md -s en -t ko --provider ollama --model translator
 ```
 
 ## Next Steps

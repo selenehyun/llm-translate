@@ -1,5 +1,9 @@
 # Chunking Strategy
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Large documents are split into chunks for translation. Understanding chunking helps optimize quality and cost.
 
 ## Why Chunking?

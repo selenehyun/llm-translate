@@ -1,5 +1,9 @@
 # API Reference
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate can be used programmatically in your Node.js applications.
 
 ## Installation

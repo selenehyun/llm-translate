@@ -1,5 +1,9 @@
 # Prompt Caching
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Prompt caching is a cost optimization feature that reduces API costs by up to 90% for repeated content.
 
 ## How It Works

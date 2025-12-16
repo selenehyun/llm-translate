@@ -1,5 +1,9 @@
 # Changelog
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 All notable changes to llm-translate will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -13,12 +17,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cache token usage tracking in translation results
 - `enableCaching` option in TranslationAgent
 - `cacheRead` and `cacheWrite` fields in token usage metadata
+- MQM (Multidimensional Quality Metrics) based quality evaluation system
+- MAPS-style pre-translation analysis step
+- Translation mode support (`--mode fast|balanced|quality`)
 
 ### Changed
 
 - `ChatMessage.content` now supports cacheable text parts
 - `ChatResponse.usage` includes cache token metrics
 - Default model updated to `claude-haiku-4-5-20251001`
+
+### Documentation
+
+- Added Ollama quality warning: 14B+ models required for reliable translation
 
 ## [0.1.0] - 2025-12-12
 

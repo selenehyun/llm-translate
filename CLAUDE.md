@@ -55,7 +55,10 @@ src/
 │   ├── cache.ts    # Translation cache
 │   └── config.ts   # Configuration loader
 ├── types/         # Shared type definitions
-│   └── index.ts
+│   ├── index.ts
+│   ├── mqm.ts     # MQM quality evaluation types
+│   ├── analysis.ts # Pre-translation analysis types
+│   └── modes.ts   # Translation mode configurations
 ├── utils/         # Utilities
 │   ├── tokens.ts  # Token counting
 │   └── logger.ts  # Logging
@@ -80,14 +83,33 @@ interface LLMProvider {
 
 ### Translation Agent Flow
 
-The Self-Refine translation algorithm MUST follow this flow:
+The translation pipeline follows research-backed multi-step approach:
+- **MAPS** (Multi-Aspect Prompting and Selection) - TACL 2024
+- **TEaR** (Translate, Estimate, Refine) - NAACL 2025
+- **MQM** (Multidimensional Quality Metrics) - WMT Standard
+
+**Pipeline Steps:**
 
 1. **PREPARE** - Load glossary, build context
-2. **INITIAL TRANSLATE** - Generate first translation with glossary injection
-3. **EVALUATE QUALITY** - Score against threshold (default: 85)
-4. **REFLECT** - Generate critique if quality not met
-5. **IMPROVE** - Apply suggestions
-6. **REPEAT** - Loop until quality >= threshold OR max iterations reached
+2. **ANALYZE** (Optional, MAPS-style) - Pre-translation analysis
+   - Extract key terms and potential challenges
+   - Identify ambiguous phrases
+   - Skip in `fast` mode
+3. **TRANSLATE** - Generate translation with glossary + analysis context
+4. **EVALUATE** (MQM-based) - Structured error annotation
+   - Error types: accuracy/fluency/style
+   - Severity: minor(1), major(5), critical(25)
+   - Score = 100 - Σ(error_weights)
+5. **REFINE** - Apply MQM error fixes directly
+6. **REPEAT** - Loop until quality >= threshold OR max iterations
+
+**Translation Modes:**
+
+| Mode | Analysis | MQM | Iterations | Threshold |
+|------|----------|-----|------------|-----------|
+| `fast` | ❌ | ❌ | 1 | 0 |
+| `balanced` | ❌ | ✅ | 2 | 75 |
+| `quality` | ✅ | ✅ | 4 | 85 |
 
 ### Glossary Resolution
 
@@ -134,15 +156,27 @@ Configuration is loaded from `.translaterc.json` with this priority:
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OLLAMA_BASE_URL` | Ollama server URL |
 
-## Quality Thresholds
+## Quality Evaluation (MQM-Based)
 
-- Default quality threshold: 85/100
-- Default max iterations: 4
-- Evaluation criteria:
-  - Semantic accuracy: 40 points
-  - Fluency: 25 points
-  - Glossary compliance: 20 points
-  - Format preservation: 15 points
+**MQM Error Types:**
+```
+Accuracy: mistranslation, omission, addition, untranslated
+Fluency: grammar, spelling, register, inconsistency
+Style: awkward, unidiomatic
+```
+
+**MQM Severity Weights:**
+| Severity | Weight | Description |
+|----------|--------|-------------|
+| Minor | 1 | Noticeable but doesn't affect understanding |
+| Major | 5 | Affects understanding or usability |
+| Critical | 25 | Completely wrong or unusable |
+
+**Score Calculation:** `score = max(0, 100 - Σ(error_weights))`
+
+**Default Thresholds:**
+- Quality threshold: 85/100 (quality mode), 75/100 (balanced), 0 (fast)
+- Max iterations: 4 (quality), 2 (balanced), 1 (fast)
 
 ## Critical Rules
 

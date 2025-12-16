@@ -1,5 +1,9 @@
 # Quality Control
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate uses a Self-Refine algorithm to ensure translation quality meets your requirements.
 
 ## How Self-Refine Works
@@ -62,7 +66,7 @@ Targeted fixes are applied based on reflection feedback, then the cycle repeats.
 
 ```bash
 # CLI
-llm-translate file doc.md -o doc.ko.md --target ko --quality 90
+llm-translate file doc.md -o doc.ko.md -s en -t ko --quality 90
 
 # Config file
 {
@@ -76,7 +80,7 @@ llm-translate file doc.md -o doc.ko.md --target ko --quality 90
 
 ```bash
 # CLI
-llm-translate file doc.md -o doc.ko.md --target ko --max-iterations 6
+llm-translate file doc.md -o doc.ko.md -s en -t ko --max-iterations 6
 
 # Config file
 {
@@ -91,7 +95,7 @@ llm-translate file doc.md -o doc.ko.md --target ko --max-iterations 6
 Fail if quality threshold is not met:
 
 ```bash
-llm-translate file doc.md -o doc.ko.md --target ko --strict
+llm-translate file doc.md -o doc.ko.md -s en -t ko --strict-quality
 ```
 
 Exit codes:

@@ -3,7 +3,21 @@ import type {
   TranslationResult,
   ResolvedGlossary,
   QualityEvaluation,
+  MQMEvaluation,
+  MQMError,
+  PreTranslationAnalysis,
+  TranslationMode,
 } from "../types/index.js";
+import {
+  parseMQMResponse,
+  formatMQMErrorsForPrompt,
+} from "../types/mqm.js";
+import {
+  parseAnalysisResponse,
+  formatAnalysisForPrompt,
+  createEmptyAnalysis,
+} from "../types/analysis.js";
+import { getModeConfig } from "../types/modes.js";
 import type {
   LLMProvider,
   ChatMessage,
@@ -217,6 +231,126 @@ Respond with only a JSON object:
 {"score": <number>, "breakdown": {"accuracy": <n>, "fluency": <n>, "glossary": <n>, "format": <n>}, "issues": ["issue1", "issue2"]}`;
 }
 
+/**
+ * Build MQM evaluation prompt (TEaR-style)
+ * Based on https://arxiv.org/abs/2402.16379
+ */
+function buildMQMEvaluationPrompt(
+  sourceText: string,
+  translatedText: string,
+  sourceLang: string,
+  targetLang: string,
+  glossaryText: string
+): string {
+  return `Evaluate this translation using MQM (Multidimensional Quality Metrics) framework.
+
+## Source (${sourceLang}):
+${sourceText}
+
+## Translation (${targetLang}):
+${translatedText}
+
+## Glossary Terms (must be applied exactly):
+${glossaryText || "No glossary provided."}
+
+## MQM Error Categories:
+- accuracy/mistranslation: Incorrect meaning
+- accuracy/omission: Missing content from source
+- accuracy/addition: Extra content not in source
+- accuracy/untranslated: Source text left unchanged
+- fluency/grammar: Grammatical errors
+- fluency/spelling: Spelling/typos
+- fluency/register: Inappropriate formality
+- fluency/inconsistency: Inconsistent terminology
+- style/awkward: Unnatural phrasing
+- style/unidiomatic: Non-native expressions
+
+## Severity Weights:
+- "minor" (1 point): Noticeable but doesn't affect understanding
+- "major" (5 points): Affects understanding or usability
+- "critical" (25 points): Completely wrong or unusable
+
+## Instructions:
+1. Identify all translation errors
+2. Classify each by type and severity
+3. Provide the span and suggested fix
+4. Calculate score: 100 - sum(weights)
+
+Respond with only a JSON object:
+{
+  "errors": [
+    {"type": "accuracy/mistranslation", "severity": "major", "span": "affected text", "suggestion": "corrected text", "explanation": "reason"}
+  ],
+  "score": <100 - sum of weights>,
+  "summary": "brief overall assessment"
+}`;
+}
+
+/**
+ * Build MQM-based refinement prompt
+ * Uses specific error annotations to guide improvements
+ */
+function buildMQMRefinementPrompt(
+  sourceText: string,
+  currentTranslation: string,
+  errors: MQMError[],
+  glossaryText: string
+): string {
+  const errorList = formatMQMErrorsForPrompt(errors);
+
+  return `Fix the following translation errors.
+
+## Source Text:
+${sourceText}
+
+## Current Translation:
+${currentTranslation}
+
+## Errors to Fix:
+${errorList}
+
+## Glossary (MUST apply):
+${glossaryText || "No glossary provided."}
+
+Apply ONLY the fixes listed above. Do not make other changes.
+Provide ONLY the corrected translation, with no additional commentary:`;
+}
+
+/**
+ * Build pre-translation analysis prompt (MAPS-style)
+ * Based on https://github.com/zwhe99/MAPS-mt
+ */
+function buildPreAnalysisPrompt(
+  sourceText: string,
+  sourceLang: string,
+  targetLang: string,
+  glossaryText: string
+): string {
+  return `Analyze this ${sourceLang} text before translating to ${targetLang}.
+
+## Source Text:
+${sourceText}
+
+## Available Glossary Terms:
+${glossaryText || "No glossary provided."}
+
+## Analyze and extract:
+1. **Key Terms**: Important domain-specific terms needing careful translation
+2. **Ambiguous Phrases**: Phrases with multiple possible interpretations
+3. **Preserve Exact**: Code, URLs, names that should NOT be translated
+4. **Challenges**: Specific difficulties for ${sourceLang}→${targetLang}
+
+Respond with only a JSON object:
+{
+  "keyTerms": [{"term": "...", "context": "...", "suggestedTranslation": "...", "fromGlossary": true/false}],
+  "ambiguousPhrases": [{"phrase": "...", "interpretations": ["..."], "recommendation": "..."}],
+  "preserveExact": ["code snippets", "URLs", "names"],
+  "challenges": ["challenge 1", "challenge 2"],
+  "domain": "technical|marketing|legal|medical|general",
+  "registerRecommendation": "formal|informal|neutral"
+}`;
+}
+
 // ============================================================================
 // Translation Agent
 // ============================================================================
@@ -230,6 +364,12 @@ export interface TranslationAgentOptions {
   strictQuality?: boolean;
   /** Enable prompt caching for Claude provider (default: true) */
   enableCaching?: boolean;
+  /** Translation mode: fast, balanced, quality (default: balanced) */
+  mode?: TranslationMode;
+  /** Enable pre-translation analysis (MAPS-style) - overrides mode setting */
+  enableAnalysis?: boolean;
+  /** Use MQM-based evaluation - overrides mode setting */
+  useMQMEvaluation?: boolean;
 }
 
 export class TranslationAgent {
@@ -239,20 +379,38 @@ export class TranslationAgent {
   private verbose: boolean;
   private strictQuality: boolean;
   private enableCaching: boolean;
+  private enableAnalysis: boolean;
+  private useMQMEvaluation: boolean;
 
   constructor(options: TranslationAgentOptions) {
     this.provider = options.provider;
-    this.qualityThreshold = options.qualityThreshold ?? 85;
-    this.maxIterations = options.maxIterations ?? 4;
     this.verbose = options.verbose ?? false;
     this.strictQuality = options.strictQuality ?? false;
+
+    // Get mode configuration
+    const modeConfig = getModeConfig(options.mode ?? "balanced");
+
+    // Apply mode settings, allowing explicit overrides
+    this.qualityThreshold = options.qualityThreshold ?? modeConfig.qualityThreshold;
+    this.maxIterations = options.maxIterations ?? modeConfig.maxIterations;
+    this.enableAnalysis = options.enableAnalysis ?? modeConfig.enableAnalysis;
+    this.useMQMEvaluation = options.useMQMEvaluation ?? modeConfig.useMQMEvaluation;
+
     // Enable caching by default for Claude provider
     this.enableCaching =
       options.enableCaching ?? options.provider.name === "claude";
+
+    if (this.verbose) {
+      logger.info(`Translation mode: ${options.mode ?? "balanced"}`);
+      logger.info(`  - Analysis: ${this.enableAnalysis ? "enabled" : "disabled"}`);
+      logger.info(`  - MQM evaluation: ${this.useMQMEvaluation ? "enabled" : "disabled"}`);
+      logger.info(`  - Quality threshold: ${this.qualityThreshold}`);
+      logger.info(`  - Max iterations: ${this.maxIterations}`);
+    }
   }
 
   /**
-   * Translate content using Self-Refine loop
+   * Translate content using Self-Refine loop with optional MAPS analysis and MQM evaluation
    */
   async translate(request: TranslationRequest): Promise<TranslationResult> {
     const timer = createTimer();
@@ -269,7 +427,26 @@ export class TranslationAgent {
         ).formatForPrompt()
       : "";
 
-    // Step 1: Initial Translation
+    // Step 1: Pre-Translation Analysis (MAPS-style, optional)
+    let analysis: PreTranslationAnalysis | null = null;
+    if (this.enableAnalysis) {
+      if (this.verbose) {
+        logger.info("Analyzing source text (MAPS)...");
+      }
+      analysis = await this.analyzeSource(
+        request.content,
+        request.sourceLang,
+        request.targetLang,
+        glossaryText
+      );
+      if (this.verbose && analysis) {
+        logger.info(`  - Domain: ${analysis.domain}`);
+        logger.info(`  - Key terms: ${analysis.keyTerms.length}`);
+        logger.info(`  - Challenges: ${analysis.challenges.length}`);
+      }
+    }
+
+    // Step 2: Initial Translation
     if (this.verbose) {
       logger.info("Starting initial translation...");
     }
@@ -279,7 +456,8 @@ export class TranslationAgent {
       request.sourceLang,
       request.targetLang,
       glossaryText,
-      request.context
+      request.context,
+      analysis
     );
     let currentTranslation = initialResult.content;
     iterations++;
@@ -289,28 +467,81 @@ export class TranslationAgent {
     totalCacheReadTokens += initialResult.usage.cacheReadTokens ?? 0;
     totalCacheWriteTokens += initialResult.usage.cacheWriteTokens ?? 0;
 
-    // Step 2: Evaluate and Refine Loop
+    // Fast mode: Skip evaluation and refinement
+    if (this.maxIterations <= 1 && this.qualityThreshold <= 0) {
+      if (this.verbose) {
+        logger.info("Fast mode: Skipping evaluation and refinement");
+      }
+      return {
+        content: currentTranslation,
+        metadata: {
+          qualityScore: 0,
+          qualityThreshold: 0,
+          thresholdMet: true,
+          iterations,
+          tokensUsed: {
+            input: totalInputTokens,
+            output: totalOutputTokens,
+            cacheRead: totalCacheReadTokens,
+            cacheWrite: totalCacheWriteTokens,
+          },
+          duration: timer.elapsed(),
+          provider: this.provider.name,
+          model: "default",
+        },
+        glossaryCompliance: request.glossary
+          ? this.checkGlossaryCompliance(
+              request.content,
+              currentTranslation,
+              request.glossary as ResolvedGlossary
+            )
+          : undefined,
+      };
+    }
+
+    // Step 3: Evaluate and Refine Loop
     let qualityScore = 0;
     let lastEvaluation: QualityEvaluation | null = null;
+    let lastMQMEvaluation: MQMEvaluation | null = null;
 
     while (iterations < this.maxIterations) {
-      // Evaluate quality
+      // Evaluate quality (MQM or simple)
       if (this.verbose) {
         logger.info(
           `Evaluating translation quality (iteration ${iterations})...`
         );
       }
 
-      lastEvaluation = await this.evaluateQuality(
-        request.content,
-        currentTranslation,
-        request.sourceLang,
-        request.targetLang
-      );
-      qualityScore = lastEvaluation.score;
+      if (this.useMQMEvaluation) {
+        // MQM-based evaluation
+        lastMQMEvaluation = await this.evaluateQualityMQM(
+          request.content,
+          currentTranslation,
+          request.sourceLang,
+          request.targetLang,
+          glossaryText
+        );
+        qualityScore = lastMQMEvaluation.score;
 
-      if (this.verbose) {
-        logger.info(`Quality score: ${qualityScore}/${this.qualityThreshold}`);
+        if (this.verbose) {
+          logger.info(`MQM score: ${qualityScore}/${this.qualityThreshold}`);
+          if (lastMQMEvaluation.errors.length > 0) {
+            logger.info(`  - Errors: ${lastMQMEvaluation.errors.length} (${lastMQMEvaluation.breakdown.accuracy} accuracy, ${lastMQMEvaluation.breakdown.fluency} fluency, ${lastMQMEvaluation.breakdown.style} style)`);
+          }
+        }
+      } else {
+        // Simple evaluation
+        lastEvaluation = await this.evaluateQuality(
+          request.content,
+          currentTranslation,
+          request.sourceLang,
+          request.targetLang
+        );
+        qualityScore = lastEvaluation.score;
+
+        if (this.verbose) {
+          logger.info(`Quality score: ${qualityScore}/${this.qualityThreshold}`);
+        }
       }
 
       // Check if quality threshold is met
@@ -323,32 +554,43 @@ export class TranslationAgent {
         break;
       }
 
-      // Step 3: Reflect and get suggestions
+      // Step 4: Refine translation
       if (this.verbose) {
-        logger.info("Generating improvement suggestions...");
+        logger.info("Refining translation...");
       }
 
-      const suggestions = await this.generateReflection(
-        request.content,
-        currentTranslation,
-        request.sourceLang,
-        request.targetLang,
-        glossaryText
-      );
+      let improveResult: {
+        content: string;
+        usage: { inputTokens: number; outputTokens: number; cacheReadTokens?: number; cacheWriteTokens?: number };
+      };
 
-      // Step 4: Improve translation
-      if (this.verbose) {
-        logger.info("Applying improvements...");
+      if (this.useMQMEvaluation && lastMQMEvaluation && lastMQMEvaluation.errors.length > 0) {
+        // MQM-based refinement: Apply specific error fixes
+        improveResult = await this.refineWithMQM(
+          request.content,
+          currentTranslation,
+          lastMQMEvaluation.errors,
+          glossaryText
+        );
+      } else {
+        // Legacy refinement: Generate suggestions then apply
+        const suggestions = await this.generateReflection(
+          request.content,
+          currentTranslation,
+          request.sourceLang,
+          request.targetLang,
+          glossaryText
+        );
+
+        improveResult = await this.improveTranslation(
+          request.content,
+          currentTranslation,
+          suggestions,
+          glossaryText
+        );
       }
 
-      const improveResult = await this.improveTranslation(
-        request.content,
-        currentTranslation,
-        suggestions,
-        glossaryText
-      );
       currentTranslation = improveResult.content;
-
       iterations++;
       totalInputTokens += improveResult.usage.inputTokens;
       totalOutputTokens += improveResult.usage.outputTokens;
@@ -357,14 +599,27 @@ export class TranslationAgent {
     }
 
     // Final evaluation if not done
-    if (!lastEvaluation || iterations === this.maxIterations) {
-      lastEvaluation = await this.evaluateQuality(
-        request.content,
-        currentTranslation,
-        request.sourceLang,
-        request.targetLang
-      );
-      qualityScore = lastEvaluation.score;
+    if (this.useMQMEvaluation) {
+      if (!lastMQMEvaluation || iterations === this.maxIterations) {
+        lastMQMEvaluation = await this.evaluateQualityMQM(
+          request.content,
+          currentTranslation,
+          request.sourceLang,
+          request.targetLang,
+          glossaryText
+        );
+        qualityScore = lastMQMEvaluation.score;
+      }
+    } else {
+      if (!lastEvaluation || iterations === this.maxIterations) {
+        lastEvaluation = await this.evaluateQuality(
+          request.content,
+          currentTranslation,
+          request.sourceLang,
+          request.targetLang
+        );
+        qualityScore = lastEvaluation.score;
+      }
     }
 
     // Check if quality threshold was met
@@ -376,7 +631,7 @@ export class TranslationAgent {
         threshold: this.qualityThreshold,
         iterations,
         maxIterations: this.maxIterations,
-        issues: lastEvaluation?.issues ?? [],
+        issues: lastEvaluation?.issues ?? lastMQMEvaluation?.errors.map(e => `${e.type}: ${e.span}`) ?? [],
       });
     }
 
@@ -412,7 +667,7 @@ export class TranslationAgent {
         },
         duration: timer.elapsed(),
         provider: this.provider.name,
-        model: "default", // Could be made configurable
+        model: "default",
       },
       glossaryCompliance: request.glossary
         ? this.checkGlossaryCompliance(
@@ -438,7 +693,8 @@ export class TranslationAgent {
       styleInstruction?: string;
       previousChunks?: string[];
       documentSummary?: string;
-    }
+    },
+    analysis?: PreTranslationAnalysis | null
   ): Promise<{
     content: string;
     usage: {
@@ -450,28 +706,53 @@ export class TranslationAgent {
   }> {
     let messages: ChatMessage[];
 
+    // Build analysis context if available
+    const analysisContext = analysis ? formatAnalysisForPrompt(analysis) : "";
+    const enrichedContext = {
+      documentPurpose: context?.documentPurpose,
+      styleInstruction: context?.styleInstruction,
+      previousContext: context?.previousChunks?.slice(-2).join("\n"),
+    };
+
     if (this.enableCaching) {
       // Use cacheable message format for Claude
-      messages = [
-        buildCacheableTranslationMessage(sourceText, sourceLang, targetLang, glossaryText, {
-          documentPurpose: context?.documentPurpose,
-          styleInstruction: context?.styleInstruction,
-          previousContext: context?.previousChunks?.slice(-2).join("\n"),
-        }),
-      ];
-    } else {
-      // Fallback to simple string format for other providers
-      const prompt = buildInitialTranslationPrompt(
+      const baseMessage = buildCacheableTranslationMessage(
         sourceText,
         sourceLang,
         targetLang,
         glossaryText,
-        {
-          documentPurpose: context?.documentPurpose,
-          styleInstruction: context?.styleInstruction,
-          previousContext: context?.previousChunks?.slice(-2).join("\n"),
-        }
+        enrichedContext
       );
+
+      // Add analysis context if available
+      if (analysisContext && Array.isArray(baseMessage.content)) {
+        const contentParts = baseMessage.content as CacheableTextPart[];
+        // Insert analysis after glossary, before translation content
+        contentParts.splice(2, 0, {
+          type: "text",
+          text: `\n## Pre-Translation Analysis:\n${analysisContext}\n`,
+        });
+      }
+
+      messages = [baseMessage];
+    } else {
+      // Fallback to simple string format for other providers
+      let prompt = buildInitialTranslationPrompt(
+        sourceText,
+        sourceLang,
+        targetLang,
+        glossaryText,
+        enrichedContext
+      );
+
+      // Inject analysis into prompt if available
+      if (analysisContext) {
+        prompt = prompt.replace(
+          "## Source Text:",
+          `## Pre-Translation Analysis:\n${analysisContext}\n\n## Source Text:`
+        );
+      }
+
       messages = [{ role: "user", content: prompt }];
     }
 
@@ -629,6 +910,122 @@ Provide ONLY the improved translation below, with no additional commentary or he
         issues: ["Failed to parse quality evaluation response"],
       };
     }
+  }
+
+  /**
+   * Pre-translation analysis using MAPS-style approach
+   * Identifies key terms, ambiguous phrases, and translation challenges
+   */
+  private async analyzeSource(
+    sourceText: string,
+    sourceLang: string,
+    targetLang: string,
+    glossaryText: string
+  ): Promise<PreTranslationAnalysis | null> {
+    const prompt = buildPreAnalysisPrompt(
+      sourceText,
+      sourceLang,
+      targetLang,
+      glossaryText
+    );
+
+    const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+
+    try {
+      const response = await this.provider.chat({ messages });
+      return parseAnalysisResponse(response.content);
+    } catch (error) {
+      if (this.verbose) {
+        logger.warn(`Pre-analysis failed: ${error}`);
+      }
+      return createEmptyAnalysis();
+    }
+  }
+
+  /**
+   * Evaluate translation quality using MQM framework
+   * Returns structured error annotations for targeted refinement
+   */
+  private async evaluateQualityMQM(
+    sourceText: string,
+    translatedText: string,
+    sourceLang: string,
+    targetLang: string,
+    glossaryText: string
+  ): Promise<MQMEvaluation> {
+    const prompt = buildMQMEvaluationPrompt(
+      sourceText,
+      translatedText,
+      sourceLang,
+      targetLang,
+      glossaryText
+    );
+
+    const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+
+    try {
+      const response = await this.provider.chat({ messages });
+      const evaluation = parseMQMResponse(response.content);
+
+      if (evaluation) {
+        return evaluation;
+      }
+
+      // Fallback if parsing fails
+      return {
+        errors: [],
+        score: 75,
+        summary: "Failed to parse MQM evaluation",
+        breakdown: { accuracy: 0, fluency: 0, style: 0 },
+      };
+    } catch {
+      return {
+        errors: [],
+        score: 75,
+        summary: "MQM evaluation failed",
+        breakdown: { accuracy: 0, fluency: 0, style: 0 },
+      };
+    }
+  }
+
+  /**
+   * Refine translation based on MQM error annotations
+   * Applies targeted fixes for identified errors
+   */
+  private async refineWithMQM(
+    sourceText: string,
+    currentTranslation: string,
+    errors: MQMError[],
+    glossaryText: string
+  ): Promise<{
+    content: string;
+    usage: {
+      inputTokens: number;
+      outputTokens: number;
+      cacheReadTokens?: number;
+      cacheWriteTokens?: number;
+    };
+  }> {
+    const prompt = buildMQMRefinementPrompt(
+      sourceText,
+      currentTranslation,
+      errors,
+      glossaryText
+    );
+
+    const messages: ChatMessage[] = [{ role: "user", content: prompt }];
+    const response = await this.provider.chat({ messages });
+    const cleanedContent = this.cleanTranslationOutput(response.content);
+
+    return {
+      content: this.preserveWhitespace(sourceText, cleanedContent),
+      usage: {
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
+        cacheReadTokens: response.usage.cacheReadTokens,
+        cacheWriteTokens: response.usage.cacheWriteTokens,
+      },
+    };
   }
 
   /**

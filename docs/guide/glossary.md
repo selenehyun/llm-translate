@@ -1,5 +1,9 @@
 # Glossary
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 The glossary feature ensures consistent terminology across all your translations. Define terms once, and they'll be translated the same way every time.
 
 ## Glossary File Format

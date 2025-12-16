@@ -1,5 +1,9 @@
 # VitePress Integration
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate provides helper functions to automatically generate VitePress i18n configuration based on your translated document structure.
 
 ## Overview

@@ -215,7 +215,10 @@ export interface ChunkingConfig {
 // Quality Evaluation Types
 // ============================================================================
 
-export interface QualityEvaluation {
+/**
+ * Legacy simple quality evaluation (for fast mode or fallback)
+ */
+export interface SimpleQualityEvaluation {
   score: number;
   breakdown: {
     accuracy: number;
@@ -225,6 +228,20 @@ export interface QualityEvaluation {
   };
   issues: string[];
 }
+
+// Re-export MQM types
+export * from './mqm.js';
+
+// Re-export analysis types
+export * from './analysis.js';
+
+// Re-export mode types
+export * from './modes.js';
+
+/**
+ * Combined quality evaluation type (supports both MQM and simple)
+ */
+export type QualityEvaluation = SimpleQualityEvaluation;
 
 // ============================================================================
 // Cache Types

@@ -412,6 +412,208 @@ export interface ChunkingConfig {
 }
 ```
 
+### 5.6 MQM Quality Evaluation Types
+
+Based on [MQM (Multidimensional Quality Metrics)](https://themqm.org/) framework.
+
+```typescript
+// src/types/mqm.ts
+
+/**
+ * MQM Error Categories
+ * Based on MQM framework used in WMT evaluations
+ */
+export type MQMErrorType =
+  // Accuracy errors
+  | 'accuracy/mistranslation'
+  | 'accuracy/omission'
+  | 'accuracy/addition'
+  | 'accuracy/untranslated'
+  // Fluency errors
+  | 'fluency/grammar'
+  | 'fluency/spelling'
+  | 'fluency/register'
+  | 'fluency/inconsistency'
+  // Style errors
+  | 'style/awkward'
+  | 'style/unidiomatic';
+
+/**
+ * MQM Severity Levels with scoring weights
+ */
+export type MQMSeverity = 'minor' | 'major' | 'critical';
+
+export const MQM_SEVERITY_WEIGHTS: Record<MQMSeverity, number> = {
+  minor: 1,
+  major: 5,
+  critical: 25,
+};
+
+/**
+ * Individual MQM error annotation
+ */
+export interface MQMError {
+  type: MQMErrorType;
+  severity: MQMSeverity;
+  span: string;              // The affected text in translation
+  suggestion: string;        // Suggested correction
+  explanation?: string;      // Brief reason for the error
+  sourceSpan?: string;       // Corresponding source text (if applicable)
+}
+
+/**
+ * MQM evaluation result
+ */
+export interface MQMEvaluation {
+  errors: MQMError[];
+  score: number;             // 100 - sum(error weights), min 0
+  summary: string;           // Brief overall assessment
+  breakdown: {
+    accuracy: number;        // Count of accuracy errors
+    fluency: number;         // Count of fluency errors
+    style: number;           // Count of style errors
+  };
+}
+
+/**
+ * Calculate MQM score from errors
+ */
+export function calculateMQMScore(errors: MQMError[]): number {
+  const totalPenalty = errors.reduce(
+    (sum, err) => sum + MQM_SEVERITY_WEIGHTS[err.severity],
+    0
+  );
+  return Math.max(0, 100 - totalPenalty);
+}
+```
+
+### 5.7 Pre-Translation Analysis Types
+
+Based on [MAPS (Multi-Aspect Prompting and Selection)](https://github.com/zwhe99/MAPS-mt) framework.
+
+```typescript
+// src/types/analysis.ts
+
+/**
+ * Key term identified during pre-analysis
+ */
+export interface AnalyzedTerm {
+  term: string;
+  context: string;
+  suggestedTranslation?: string;
+  fromGlossary: boolean;
+}
+
+/**
+ * Ambiguous phrase that needs clarification
+ */
+export interface AmbiguousPhrase {
+  phrase: string;
+  interpretations: string[];
+  recommendation: string;
+}
+
+/**
+ * Domain classification for the content
+ */
+export type ContentDomain =
+  | 'technical'
+  | 'marketing'
+  | 'legal'
+  | 'medical'
+  | 'general';
+
+/**
+ * Register/formality recommendation
+ */
+export type RegisterLevel = 'formal' | 'informal' | 'neutral';
+
+/**
+ * Pre-translation analysis result (MAPS-style)
+ */
+export interface PreTranslationAnalysis {
+  /** Key domain-specific terms identified */
+  keyTerms: AnalyzedTerm[];
+
+  /** Phrases with multiple possible interpretations */
+  ambiguousPhrases: AmbiguousPhrase[];
+
+  /** Items that should NOT be translated (code, URLs, names) */
+  preserveExact: string[];
+
+  /** Identified translation challenges for this language pair */
+  challenges: string[];
+
+  /** Detected content domain */
+  domain: ContentDomain;
+
+  /** Recommended formality level */
+  registerRecommendation: RegisterLevel;
+}
+
+/**
+ * Translation agent configuration with analysis options
+ */
+export interface TranslationAgentConfig {
+  provider: LLMProvider;
+  qualityThreshold?: number;
+  maxIterations?: number;
+
+  /** Enable pre-translation analysis (MAPS) - default: true */
+  enableAnalysis?: boolean;
+
+  /** Use MQM-based evaluation - default: true */
+  useMQMEvaluation?: boolean;
+
+  /** Translation mode affecting pipeline */
+  mode?: 'fast' | 'balanced' | 'quality';
+}
+```
+
+### 5.8 Translation Mode Configurations
+
+```typescript
+// src/types/modes.ts
+
+/**
+ * Translation mode presets
+ */
+export type TranslationMode = 'fast' | 'balanced' | 'quality';
+
+export interface ModeConfig {
+  enableAnalysis: boolean;
+  useMQMEvaluation: boolean;
+  maxIterations: number;
+  qualityThreshold: number;
+}
+
+export const MODE_PRESETS: Record<TranslationMode, ModeConfig> = {
+  /** Fast mode: Single pass, no evaluation */
+  fast: {
+    enableAnalysis: false,
+    useMQMEvaluation: false,
+    maxIterations: 1,
+    qualityThreshold: 0,  // Skip threshold check
+  },
+
+  /** Balanced mode: TEaR with simplified evaluation */
+  balanced: {
+    enableAnalysis: false,
+    useMQMEvaluation: true,
+    maxIterations: 2,
+    qualityThreshold: 75,
+  },
+
+  /** Quality mode: Full MAPS + TEaR pipeline */
+  quality: {
+    enableAnalysis: true,
+    useMQMEvaluation: true,
+    maxIterations: 4,
+    qualityThreshold: 85,
+  },
+};
+```
+
 ---
 
 ## 6. CLI Specification
@@ -440,8 +642,11 @@ Translation Options:
   -g, --glossary <path>     Path to glossary file
   -p, --provider <name>     LLM provider (claude|openai|ollama)
   -m, --model <name>        Model name
-  --quality <0-100>         Quality threshold (default: 85)
-  --max-iterations <n>      Max refinement iterations (default: 4)
+  --mode <mode>             Translation mode: fast|balanced|quality (default: balanced)
+  --quality <0-100>         Quality threshold (default: 85, overrides mode)
+  --max-iterations <n>      Max refinement iterations (default: 4, overrides mode)
+  --no-analysis             Disable pre-translation analysis (MAPS)
+  --no-mqm                  Use simple evaluation instead of MQM
 
 Output Options:
   -o, --output <path>       Output path (file or directory)
@@ -504,6 +709,11 @@ llm-translate glossary validate ./glossary.json
 
 ### 7.1 Translation Agent Flow
 
+The translation pipeline follows a multi-step approach inspired by:
+- [MAPS (Multi-Aspect Prompting and Selection)](https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00642/119992) - TACL 2024
+- [TEaR (Translate, Estimate, Refine)](https://arxiv.org/abs/2402.16379) - NAACL 2025
+- [Translating Step-by-Step](https://arxiv.org/abs/2409.06790) - Google, WMT 2024
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    TRANSLATION AGENT                         │
@@ -514,32 +724,75 @@ llm-translate glossary validate ./glossary.json
 │  └──────┬───────┘                                           │
 │         ▼                                                    │
 │  ┌──────────────┐                                           │
-│  │ 2. INITIAL   │ Generate first translation                │
-│  │   TRANSLATE  │ with glossary + context injection         │
+│  │ 2. ANALYZE   │ Pre-translation analysis (MAPS)           │
+│  │   (Optional) │ Extract keywords, identify challenges     │
+│  └──────┬───────┘                                           │
+│         ▼                                                    │
+│  ┌──────────────┐                                           │
+│  │ 3. INITIAL   │ Generate first translation                │
+│  │   TRANSLATE  │ with glossary + context + analysis        │
 │  └──────┬───────┘                                           │
 │         ▼                                                    │
 │  ┌──────────────┐     ┌─────────────────────────────┐       │
-│  │ 3. EVALUATE  │────▶│ Quality >= Threshold?       │       │
-│  │   QUALITY    │     │ OR Max iterations reached?  │       │
+│  │ 4. EVALUATE  │────▶│ Quality >= Threshold?       │       │
+│  │   (MQM)      │     │ OR Max iterations reached?  │       │
 │  └──────┬───────┘     └─────────────┬───────────────┘       │
 │         │                           │                        │
 │         │ No                        │ Yes                    │
 │         ▼                           ▼                        │
 │  ┌──────────────┐           ┌──────────────┐                │
-│  │ 4. REFLECT   │           │ 6. RETURN    │                │
-│  │   Generate   │           │   Final      │                │
-│  │   critique   │           │   Result     │                │
+│  │ 5. REFINE    │           │ 7. RETURN    │                │
+│  │   Apply MQM  │           │   Final      │                │
+│  │   error fixes│           │   Result     │                │
 │  └──────┬───────┘           └──────────────┘                │
-│         ▼                                                    │
-│  ┌──────────────┐                                           │
-│  │ 5. IMPROVE   │ Apply suggestions                         │
-│  │   Refine     │─────────────────────────┐                 │
-│  └──────────────┘                         │                 │
-│         ▲                                 │                 │
-│         └─────────────────────────────────┘                 │
-│                    Loop back to EVALUATE                     │
-└─────────────────────────────────────────────────────────────┘
+│         │                                                    │
+│         └──────────────────────────────────┐                │
+│                    Loop back to EVALUATE   │                │
+└────────────────────────────────────────────┴────────────────┘
 ```
+
+### 7.1.1 Pre-Translation Analysis (MAPS-Style)
+
+Before translation, analyze the source text to identify potential challenges.
+This step is **optional** and can be skipped in `fast` mode.
+
+**Analysis Prompt:**
+```
+Analyze this {sourceLang} text before translating to {targetLang}.
+
+## Source Text:
+{sourceText}
+
+## Glossary Terms Available:
+{glossaryTerms}
+
+## Analyze and extract:
+1. **Key Terms**: Important domain-specific terms that need careful translation
+2. **Ambiguous Phrases**: Phrases with multiple possible interpretations
+3. **Cultural References**: Content that may need localization
+4. **Technical Identifiers**: Code, URLs, names that should NOT be translated
+5. **Potential Challenges**: Specific difficulties for this language pair
+
+Respond with only a JSON object:
+{
+  "keyTerms": [
+    {"term": "...", "context": "...", "suggestedTranslation": "..."}
+  ],
+  "ambiguousPhrases": [
+    {"phrase": "...", "interpretations": ["...", "..."], "recommendation": "..."}
+  ],
+  "preserveExact": ["code", "urls", "names to keep unchanged"],
+  "challenges": ["challenge 1", "challenge 2"],
+  "domain": "technical|marketing|legal|general",
+  "registerRecommendation": "formal|informal|neutral"
+}
+```
+
+**Benefits of Pre-Analysis:**
+- Resolves ambiguity before translation
+- Reduces hallucination
+- Improves consistency for domain-specific content
+- Enables better glossary application
 
 ### 7.2 Prompt Templates
 
@@ -610,10 +863,78 @@ Improve this translation based on the following suggestions.
 Provide only the improved translation, nothing else:
 ```
 
-### 7.3 Quality Evaluation
+### 7.3 Quality Evaluation (MQM-Based)
 
-For MVP, use LLM-based evaluation:
+Quality evaluation uses **Multidimensional Quality Metrics (MQM)** framework for structured error annotation.
+This approach is based on the [TEaR (Translate, Estimate, Refine)](https://arxiv.org/abs/2402.16379) research paper (NAACL 2025).
 
+**MQM Error Types:**
+```
+Accuracy
+├── Mistranslation     # Incorrect meaning
+├── Omission           # Missing content
+├── Addition           # Extra content not in source
+└── Untranslated       # Source text left unchanged
+
+Fluency
+├── Grammar            # Grammatical errors
+├── Spelling           # Spelling/typos
+├── Register           # Inappropriate formality level
+└── Inconsistency      # Inconsistent terminology
+
+Style
+├── Awkward            # Unnatural phrasing
+└── Unidiomatic        # Non-native expressions
+```
+
+**MQM Severity Weights:**
+| Severity | Weight | Description |
+|----------|--------|-------------|
+| Minor | 1 | Noticeable but doesn't affect understanding |
+| Major | 5 | Affects understanding or usability |
+| Critical | 25 | Completely wrong or unusable |
+
+**Score Calculation:**
+```
+score = max(0, 100 - Σ(error_weight))
+```
+
+**MQM Evaluation Prompt:**
+```
+Evaluate this translation using MQM (Multidimensional Quality Metrics) framework.
+
+## Source ({sourceLang}):
+{sourceText}
+
+## Translation ({targetLang}):
+{translatedText}
+
+## Glossary Terms (must be applied exactly):
+{glossaryTerms}
+
+## Instructions:
+1. Identify all translation errors
+2. Classify each error by type and severity
+3. For each error, provide the span and suggested fix
+4. Severity: "minor" (1 point), "major" (5 points), "critical" (25 points)
+
+Respond with only a JSON object:
+{
+  "errors": [
+    {
+      "type": "accuracy/mistranslation",
+      "severity": "major",
+      "span": "affected text",
+      "suggestion": "corrected text",
+      "explanation": "brief reason"
+    }
+  ],
+  "score": <100 - sum of weights>,
+  "summary": "brief overall assessment"
+}
+```
+
+**Legacy Simple Evaluation (fallback for fast mode):**
 ```
 Rate this translation's quality from 0 to 100.
 

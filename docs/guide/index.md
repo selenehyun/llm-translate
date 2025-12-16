@@ -1,5 +1,9 @@
 # What is llm-translate?
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate is a CLI tool for translating documents using Large Language Models. It's designed specifically for technical documentation where consistency, accuracy, and format preservation are critical.
 
 ## Key Features

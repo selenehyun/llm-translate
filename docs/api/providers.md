@@ -1,5 +1,9 @@
 # Providers
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 LLM provider implementations for different AI services.
 
 ## Overview

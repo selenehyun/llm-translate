@@ -1,5 +1,9 @@
 # Configuration
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 llm-translate uses a layered configuration system. Settings are applied in this order (later overrides earlier):
 
 1. Built-in defaults

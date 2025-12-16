@@ -1,5 +1,9 @@
 # Cost Optimization
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 This guide covers strategies to minimize API costs while maintaining translation quality.
 
 ## Cost Structure

@@ -1,5 +1,9 @@
 # llm-translate glossary
 
+::: info Translations
+All non-English documentation is automatically translated using Claude Sonnet 4.
+:::
+
 Manage glossary files for consistent terminology.
 
 ## Synopsis
