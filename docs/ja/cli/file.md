@@ -1,5 +1,9 @@
 # llm-translate file
 
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
 単一ファイルを翻訳します。
 
 ## 概要
@@ -21,61 +25,66 @@ llm-translate file <input> [output] [options]
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`--source `,`-s`| 自動検出 | ソース言語コード |
-|`--target `,`-t`| 必須 | ターゲット言語コード |
+|`--source-lang `,`-s`| 必須 | ソース言語コード |
+|`--target-lang `,`-t`| 必須 | ターゲット言語コード |
 |`--glossary `,`-g`| なし | 用語集ファイルのパス |
 
 ### 品質オプション
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`--quality `,`-q`| 85 | 品質しきい値（0-100） |
-|`--max-iterations`| 4 | 最大改善反復回数 |
-|`--strict`| false | しきい値に達しない場合は失敗 |
+|`--quality`| 85 | 品質しきい値（0-100） |
+|`--max-iterations`| 4 | 最大改良反復回数 |
+|`--strict-quality`| false | しきい値を満たさない場合に失敗 |
+|`--strict-glossary`| false | 用語集の用語が適用されない場合に失敗 |
 
 ### プロバイダーオプション
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
 |`--provider `,`-p`| claude | プロバイダー名 |
-|`--model `,`-m`| 異なる | モデル識別子 |
+|`--model `,`-m`| 可変 | モデル識別子 |
 
 ### 出力オプション
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`--output `,`-o`| stdout | 出力ファイルパス |
-|`--overwrite`| false | 既存の出力を上書き |
-|`--dry-run`| false | 実行内容を表示 |
+|`--output `,`-o`| auto | 出力ファイルパス |
+|`--format `,`-f`| auto | 出力フォーマットを強制（md\|html\|txt） |
+|`--dry-run`| false | 実行される内容を表示 |
+|`--json`| false | 結果をJSONで出力 |
+|`--verbose `,`-v`| false | 詳細ログを有効化 |
+|`--quiet `,`-q`| false | エラー以外の出力を抑制 |
 
 ### 高度なオプション
 
 | オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`--no-cache`| false | プロンプトキャッシングを無効化 |
+|`--no-cache`| false | 翻訳キャッシュを無効化 |
 |`--chunk-size`| 1024 | チャンクあたりの最大トークン数 |
+|`--context`| なし | 翻訳のための追加コンテキスト |
 
 ## 例
 
 ### 基本的な使用方法
 
 ```bash
-# Translate to Korean, output to stdout
-llm-translate file README.md --target ko
+# Translate to Korean
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate to file
-llm-translate file README.md -o README.ko.md --target ko
+# With explicit output path
+llm-translate file README.md --output README.ko.md --source-lang en --target-lang ko
 
-# Specify source language
-llm-translate file doc.md -o doc.ja.md --source en --target ja
+# Specify source and target languages
+llm-translate file doc.md -o doc.ja.md --source-lang en --target-lang ja
 ```
 
-### 用語集を使用する場合
+### 用語集を使用
 
 ```bash
 # Use glossary for consistent terminology
 llm-translate file api-docs.md -o api-docs.ko.md \
-  --target ko \
+  -s en -t ko \
   --glossary glossary.json
 ```
 
@@ -84,44 +93,45 @@ llm-translate file api-docs.md -o api-docs.ko.md \
 ```bash
 # Higher quality threshold
 llm-translate file important.md -o important.ko.md \
-  --target ko \
+  -s en -t ko \
   --quality 95 \
   --max-iterations 6
 
 # Strict mode (fail if not met)
 llm-translate file legal.md -o legal.ko.md \
-  --target ko \
+  --source-lang en \
+  --target-lang ko \
   --quality 95 \
-  --strict
+  --strict-quality
 ```
 
-### プロバイダーの選択
+### プロバイダー選択
 
 ```bash
 # Use Claude Sonnet
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider claude \
   --model claude-sonnet-4-5-20250929
 
 # Use OpenAI
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider openai \
   --model gpt-4o
 ```
 
-### stdinから入力
+### stdinから
 
 ```bash
-# Pipe content
-cat doc.md | llm-translate file - --target ko > doc.ko.md
+# Pipe content (uses stdin mode when no TTY)
+cat doc.md | llm-translate -s en -t ko > doc.ko.md
 
 # Use with other tools
-curl https://example.com/doc.md | llm-translate file - --target ko
+curl https://example.com/doc.md | llm-translate -s en -t ko
 ```
 
-## 出力形式
+## 出力フォーマット
 
 ### 通常モード
 
@@ -181,15 +191,15 @@ llm-translate file doc.md -o doc.ko.md --target ko --verbose
 ### ファイルが見つからない
 
 ```bash
-$ llm-translate file missing.md --target ko
-Error: File not found: missing.md
+$ llm-translate file missing.md -s en -t ko
+Error: Could not read file 'missing.md'
 Exit code: 3
 ```
 
-### 品質が満たされていない（厳密モード）
+### 品質が満たされない（厳格モード）
 
 ```bash
-$ llm-translate file doc.md -o doc.ko.md --target ko --quality 99 --strict
+$ llm-translate file doc.md -o doc.ko.md -s en -t ko --quality 99 --strict-quality
 Error: Quality threshold not met: 94/99
 Exit code: 4
 ```

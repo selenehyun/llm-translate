@@ -1,15 +1,19 @@
 # 프롬프트 캐싱
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 프롬프트 캐싱은 반복되는 콘텐츠에 대해 API 비용을 최대 90%까지 절감하는 비용 최적화 기능입니다.
 
 ## 작동 원리
 
-문서를 번역할 때 프롬프트의 특정 부분은 일정하게 유지됩니다.
+문서를 번역할 때 프롬프트의 특정 부분은 일정하게 유지됩니다:
 
 - **시스템 지침**: 번역 규칙 및 가이드라인
-- **용어집**: 도메인별 용어
+- **용어집**: 도메인별 전문 용어
 
-이러한 항목들은 캐시되어 여러 청크에서 재사용되므로 상당한 비용을 절감할 수 있습니다.
+이러한 내용은 캐시되어 여러 청크에서 재사용되므로 상당한 비용을 절약할 수 있습니다.
 
 ```
 Request 1 (First Chunk):
@@ -33,7 +37,7 @@ Request 2+ (Subsequent Chunks):
 
 ## 비용 영향
 
-### 가격 책정 (Claude)
+### 가격 (Claude)
 
 | 토큰 유형 | 비용 배수 |
 |------------|-----------------|
@@ -44,14 +48,14 @@ Request 2+ (Subsequent Chunks):
 
 ### 계산 예시
 
-500-토큰 용어집이 있는 10-청크 문서의 경우:
+500토큰 용어집이 있는 10청크 문서의 경우:
 
-**캐싱 없음:**
+**캐싱 없이:**
 ```
 10 chunks × 500 glossary tokens = 5,000 tokens
 ```
 
-**캐싱 포함:**
+**캐싱 사용:**
 ```
 First chunk: 500 × 1.25 = 625 tokens (cache write)
 9 chunks: 500 × 0.1 × 9 = 450 tokens (cache read)
@@ -62,7 +66,7 @@ Total: 1,075 tokens (78% savings)
 
 ### 최소 토큰 임계값
 
-프롬프트 캐싱에는 최소 콘텐츠 길이가 필요합니다.
+프롬프트 캐싱에는 최소 콘텐츠 길이가 필요합니다:
 
 | 모델 | 최소 토큰 |
 |-------|---------------|
@@ -71,7 +75,7 @@ Total: 1,075 tokens (78% savings)
 | Claude Sonnet | 1,024 |
 | Claude Opus | 1,024 |
 
-이러한 임계값 이하의 콘텐츠는 캐시되지 않습니다.
+이 임계값 미만의 콘텐츠는 캐시되지 않습니다.
 
 ### 제공자 지원
 
@@ -89,7 +93,7 @@ Claude의 경우 캐싱이 기본적으로 활성화됩니다. 비활성화하�
 llm-translate file doc.md -o doc.ko.md --target ko --no-cache
 ```
 
-또는 구성에서:
+또는 설정에서:
 
 ```json
 {
@@ -115,7 +119,7 @@ llm-translate file doc.md -o doc.ko.md --target ko --no-cache
 llm-translate file doc.md -o doc.ko.md --target ko --verbose
 ```
 
-청크별 캐시 통계를 표시합니다.
+청크별 캐시 통계를 표시합니다:
 
 ```
 [Chunk 1/10] Cache: 0 read / 890 written
@@ -124,7 +128,7 @@ llm-translate file doc.md -o doc.ko.md --target ko --verbose
 ...
 ```
 
-### 프로그래밍 방식 액세스
+### 프로그래밍 방식 접근
 
 ```typescript
 const result = await engine.translateFile({
@@ -159,16 +163,16 @@ llm-translate file b.md --glossary b-glossary.json
 
 ### 2. 관련 파일 일괄 처리
 
-캐시는 약 5분 동안 유지됩니다. 파일을 함께 처리하세요.
+캐시는 약 5분간 지속됩니다. 파일을 함께 처리하세요:
 
 ```bash
 # Efficient: Sequential processing shares cache
 llm-translate dir ./docs ./docs-ko --target ko
 ```
 
-### 3. 파일을 크기별로 정렬
+### 3. 크기별로 파일 정렬
 
-더 큰 파일부터 시작하여 캐시를 준비하세요.
+캐시를 워밍하기 위해 큰 파일부터 시작하세요:
 
 ```bash
 # Cache is populated by first file, reused by rest
@@ -176,11 +180,11 @@ llm-translate file large-doc.md ...
 llm-translate file small-doc.md ...
 ```
 
-### 4. 더 큰 용어집을 전략적으로 사용
+### 4. 전략적으로 큰 용어집 사용
 
-더 큰 용어집은 캐싱으로부터 더 많은 이점을 얻습니다.
+큰 용어집일수록 캐싱의 이점이 더 큽니다:
 
-| 용어집 크기 | 캐시 절감 |
+| 용어집 크기 | 캐시 절약 |
 |---------------|---------------|
 | 100 토큰 | ~70% |
 | 500 토큰 | ~78% |
@@ -193,25 +197,25 @@ llm-translate file small-doc.md ...
 **증상:**`cacheRead` 토큰이 보고되지 않음
 
 **원인:**
-1. 최소 임계값 이하의 콘텐츠
+1. 최소 임계값 미만의 콘텐츠
 2. 요청 간 콘텐츠 변경
 3. 캐시 TTL 만료 (5분)
 
 **해결책:**
-- 용어집 + 시스템 프롬프트가 최소 토큰 이상인지 확인하세요.
-- 파일을 빠르게 연속으로 처리하세요.
-- 상세 모드를 사용하여 디버깅하세요.
+- 용어집 + 시스템 프롬프트가 최소 토큰을 초과하는지 확인
+- 파일을 연속적으로 빠르게 처리
+- 디버깅을 위해 상세 모드 사용
 
 ### 높은 캐시 쓰기 비용
 
-**증상:** 예상보다 많은 `cacheWrite` 토큰
+**증상:** 예상보다 많은 `cacheWrite`
 
 **원인:**
 1. 많은 고유 용어집
-2. 파일이 너무 멀리 떨어져 처리됨
+2. 파일 처리 간격이 너무 긺
 3. 실행 간 캐시 무효화
 
 **해결책:**
 - 용어집 통합
 - 일괄 처리 사용
-- 5분 이내에 처리하세요.
+- 5분 창 내에서 처리

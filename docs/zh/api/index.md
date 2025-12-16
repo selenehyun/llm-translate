@@ -1,6 +1,10 @@
 # API 参考
 
-llm-translate 可以在你的 Node.js 应用程序中以编程方式使用。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+llm-translate 可以在您的 Node.js 应用程序中以编程方式使用。
 
 ## 安装
 
@@ -39,7 +43,7 @@ console.log(result.metadata);
 
 ### [TranslationEngine](./engine)
 
-翻译操作的主入口点。
+翻译操作的主要入口点。
 
 ```typescript
 const engine = new TranslationEngine(options);
@@ -49,7 +53,7 @@ await engine.translateContent(content, options);
 
 ### [TranslationAgent](./agent)
 
-具有 Self-Refine 循环的低级翻译代理。
+带有 Self-Refine 循环的低级翻译代理。
 
 ```typescript
 const agent = new TranslationAgent({ provider, qualityThreshold });
@@ -161,7 +165,7 @@ try {
 |`GLOSSARY_NOT_FOUND`| 术语表文件未找到 |
 |`GLOSSARY_INVALID`| 术语表验证失败 |
 |`PROVIDER_AUTH_FAILED`| API 密钥无效 |
-|`PROVIDER_RATE_LIMITED`| 超过速率限制 |
-|`PROVIDER_ERROR`| 通用提供商错误 |
-|`QUALITY_THRESHOLD_NOT_MET`| 翻译质量低于质量阈值 |
+|`PROVIDER_RATE_LIMITED`| 超出速率限制 |
+|`PROVIDER_ERROR`| 一般提供商错误 |
+|`QUALITY_THRESHOLD_NOT_MET`| 翻译质量低于阈值 |
 |`PARSE_ERROR`| 文档解析失败 |

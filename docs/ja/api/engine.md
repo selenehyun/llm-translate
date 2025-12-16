@@ -1,8 +1,12 @@
 # TranslationEngine
 
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
 翻訳操作のメインエントリーポイントです。
 
-## コンストラクター
+## コンストラクタ
 
 ```typescript
 import { TranslationEngine } from '@llm-translate/cli';
@@ -90,7 +94,7 @@ console.log(`Output: ${result.outputPath}`);
 
 ### translateContent
 
-ファイルI/Oなしでコンテンツを直接翻訳します。
+コンテンツを直接翻訳します（ファイルI/Oなし）。
 
 ```typescript
 const result = await engine.translateContent(
@@ -194,7 +198,7 @@ console.log(`Average quality: ${results.summary.averageQuality}`);
 
 ## イベント
 
-TranslationEngineはEventEmitterを拡張しています：
+TranslationEngineはEventEmitterを継承しています：
 
 ```typescript
 engine.on('chunk:start', (data) => {

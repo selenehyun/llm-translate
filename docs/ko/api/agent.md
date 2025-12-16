@@ -1,5 +1,9 @@
 # TranslationAgent
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 Self-Refine 알고리즘을 구현하는 저수준 번역 에이전트입니다.
 
 ## 생성자
@@ -130,7 +134,7 @@ console.log(result.content);  // 안녕하세요, 세계!
 console.log(result.metadata.qualityScore);  // 92
 ```
 
-### 용어집 포함
+### 용어집 사용
 
 ```typescript
 import { loadGlossary, resolveGlossary } from '@llm-translate/cli';
@@ -149,7 +153,7 @@ console.log(result.glossaryCompliance);
 // { applied: ['component', 'prop'], missed: [] }
 ```
 
-### 컨텍스트 포함
+### 컨텍스트 사용
 
 ```typescript
 const result = await agent.translate({
@@ -193,7 +197,7 @@ try {
 
 | 기준 | 가중치 | 설명 |
 |-----------|--------|-------------|
-| 의미론적 정확성 | 40% | 의미 보존 |
+| 의미 정확성 | 40% | 의미 보존 |
 | 유창성 | 25% | 자연스러운 언어 흐름 |
 | 용어집 준수 | 20% | 용어 일관성 |
 | 형식 보존 | 15% | 구조 유지 |
@@ -215,7 +219,7 @@ interface QualityEvaluation {
 
 ## 프롬프트 캐싱
 
-`enableCaching` 이 true인 경우(Claude의 기본값), 에이전트는 캐싱을 위해 프롬프트를 구조화합니다:
+`enableCaching` 이 true일 때 (Claude의 기본값), 에이전트는 캐싱을 위해 프롬프트를 구조화합니다:
 
 ```
 ┌─────────────────────────────────┐
@@ -227,7 +231,7 @@ interface QualityEvaluation {
 └─────────────────────────────────┘
 ```
 
-이는 다중 청크 문서의 경우 비용을 40-50% 절감할 수 있습니다.
+이는 다중 청크 문서의 비용을 40-50% 절감할 수 있습니다.
 
 ## 고급: 사용자 정의 평가
 

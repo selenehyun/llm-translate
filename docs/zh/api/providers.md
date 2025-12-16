@@ -1,6 +1,10 @@
 # 提供商
 
-不同AI服务的LLM提供商实现。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+不同 AI 服务的 LLM 提供商实现。
 
 ## 概述
 
@@ -118,11 +122,11 @@ interface OpenAIProviderConfig {
 
 ### 自动缓存
 
-OpenAI 为超过 1024 令牌的提示自动处理缓存。
+OpenAI 对超过 1024 个令牌的提示自动处理缓存。
 
 ## Ollama 提供商
 
-用于本地、自托管模型。
+用于本地自托管模型。
 
 ### 设置
 
@@ -271,11 +275,11 @@ class CustomProvider implements LLMProvider {
 | OpenAI 生态系统 | OpenAI | GPT-4o |
 | 预算受限 | OpenAI | GPT-4o-mini |
 | 隐私/离线 | Ollama | Llama 3.1 |
-| 企业级 | Claude/OpenAI | 因情况而异 |
+| 企业级 | Claude/OpenAI | 视情况而定 |
 
 ## 错误处理
 
-所有提供商抛出 `TranslationError`：
+所有提供商都会抛出 `TranslationError`：
 
 ```typescript
 import { TranslationError, ErrorCode } from '@llm-translate/cli';

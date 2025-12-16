@@ -1,6 +1,10 @@
 # TranslationAgent
 
-实现 Self-Refine 算法的低级翻译代理。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+实现 Self-Refine 算法的底层翻译代理。
 
 ## 构造函数
 
@@ -78,7 +82,7 @@ interface TranslationResult {
 
 ## Self-Refine 算法
 
-该代理实现以下迭代细化过程：
+代理实现了这个迭代优化过程：
 
 ```typescript
 // Pseudocode
@@ -109,7 +113,7 @@ async translate(request) {
 
 ## 使用示例
 
-### 基本翻译
+### 基础翻译
 
 ```typescript
 import { TranslationAgent, createClaudeProvider } from '@llm-translate/cli';
@@ -189,14 +193,14 @@ try {
 
 ## 质量评估
 
-该代理根据四个标准评估翻译：
+代理根据四个标准评估翻译：
 
 | 标准 | 权重 | 描述 |
 |-----------|--------|-------------|
-| 语义准确性 | 40% | 意义保留 |
-| 流畅性 | 25% | 自然语言流畅度 |
+| 语义准确性 | 40% | 意义保持 |
+| 流畅性 | 25% | 自然语言流 |
 | 术语表合规性 | 20% | 术语一致性 |
-| 格式保留 | 15% | 结构维护 |
+| 格式保持 | 15% | 结构维护 |
 
 ### 评估结果
 
@@ -215,7 +219,7 @@ interface QualityEvaluation {
 
 ## 提示缓存
 
-当 `enableCaching` 为 true 时（Claude 默认值），该代理会结构化提示以进行缓存：
+当 `enableCaching` 为 true（Claude 的默认值）时，代理会为缓存构建提示：
 
 ```
 ┌─────────────────────────────────┐
@@ -227,7 +231,7 @@ interface QualityEvaluation {
 └─────────────────────────────────┘
 ```
 
-这可以将多分块文档的成本降低 40-50%。
+这可以为多分块文档减少 40-50% 的成本。
 
 ## 高级：自定义评估
 

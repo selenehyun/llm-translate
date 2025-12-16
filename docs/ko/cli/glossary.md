@@ -1,6 +1,10 @@
 # llm-translate glossary
 
-일관된 용어를 위해 용어집 파일을 관리합니다.
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
+일관된 용어 사용을 위한 용어집 파일을 관리합니다.
 
 ## 개요
 
@@ -20,7 +24,7 @@ llm-translate glossary list --glossary glossary.json
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
+|--------|-------------|
 |`--glossary `,`-g`| 용어집 파일 경로 (필수) |
 |`--target `,`-t`| 대상 언어로 필터링 |
 |`--format `| 출력 형식:` table `,` json`|
@@ -55,7 +59,7 @@ DNT = Do Not Translate, CS = Case Sensitive
 
 ### validate
 
-용어집 파일 구조 및 내용을 검증합니다.
+용어집 파일 구조와 내용을 검증합니다.
 
 ```bash
 llm-translate glossary validate --glossary glossary.json
@@ -63,7 +67,7 @@ llm-translate glossary validate --glossary glossary.json
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
+|--------|-------------|
 |`--glossary `,`-g`| 용어집 파일 경로 (필수) |
 |`--strict`| 경고 시 실패 |
 
@@ -94,7 +98,7 @@ Warnings:
 
 ### add
 
-용어집에 새로운 용어를 추가합니다.
+용어집에 새 용어를 추가합니다.
 
 ```bash
 llm-translate glossary add <source> [options]
@@ -102,10 +106,10 @@ llm-translate glossary add <source> [options]
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
+|--------|-------------|
 |`--glossary `,`-g`| 용어집 파일 경로 (필수) |
 |`--target `| 대상 번역 (형식:` lang=value`) |
-|`--context`| 용어의 문맥 |
+|`--context`| 용어의 맥락 |
 |`--dnt`| "번역하지 않음"으로 표시 |
 |`--case-sensitive`| 대소문자 구분으로 표시 |
 
@@ -154,10 +158,10 @@ llm-translate glossary update <source> [options]
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
+|--------|-------------|
 |`--glossary `,`-g`| 용어집 파일 경로 (필수) |
 |`--target`| 대상 번역 업데이트 |
-|`--context`| 문맥 업데이트 |
+|`--context`| 맥락 업데이트 |
 |`--dnt`| 번역하지 않음 설정/해제 |
 
 예시:
@@ -211,14 +215,14 @@ llm-translate glossary merge \
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
-|`--input `,`-i`| 입력 용어집 파일 (여러 개) |
+|--------|-------------|
+|`--input `,`-i`| 입력 용어집 파일들 (다중) |
 |`--output `,`-o`| 병합된 용어집 출력 |
 |`--strategy `| 충돌 해결:` first `,` last `,` error`|
 
 ### export
 
-용어집을 다양한 형식으로 내보냅니다.
+용어집을 다른 형식으로 내보냅니다.
 
 ```bash
 llm-translate glossary export --glossary glossary.json --format csv
@@ -226,7 +230,7 @@ llm-translate glossary export --glossary glossary.json --format csv
 
 옵션:
 | 옵션 | 설명 |
-|--------|--------|
+|--------|-------------|
 |`--format `| 내보내기 형식:` csv `,` tsv `,` xlsx`|
 |`--output `,`-o`| 출력 파일 경로 |
 

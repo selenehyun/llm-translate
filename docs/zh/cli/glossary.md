@@ -1,6 +1,10 @@
-# llm-translate 术语表
+# llm-translate glossary
 
-管理术语表文件以确保术语的一致性。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+管理术语表文件以确保术语一致性。
 
 ## 概要
 
@@ -22,7 +26,7 @@ llm-translate glossary list --glossary glossary.json
 | 选项 | 描述 |
 |--------|-------------|
 |`--glossary `,`-g`| 术语表文件路径（必需） |
-|`--target `,`-t`| 按目标语言筛选 |
+|`--target `,`-t`| 按目标语言过滤 |
 |`--format `| 输出格式：` table `、` json`|
 
 示例：
@@ -55,7 +59,7 @@ DNT = Do Not Translate, CS = Case Sensitive
 
 ### validate
 
-验证术语表文件的结构和内容。
+验证术语表文件结构和内容。
 
 ```bash
 llm-translate glossary validate --glossary glossary.json
@@ -65,7 +69,7 @@ llm-translate glossary validate --glossary glossary.json
 | 选项 | 描述 |
 |--------|-------------|
 |`--glossary `,`-g`| 术语表文件路径（必需） |
-|`--strict`| 在出现警告时失败 |
+|`--strict`| 警告时失败 |
 
 示例：
 
@@ -213,8 +217,8 @@ llm-translate glossary merge \
 | 选项 | 描述 |
 |--------|-------------|
 |`--input `,`-i`| 输入术语表文件（多个） |
-|`--output `,`-o`| 输出合并后的术语表 |
-|`--strategy `| 冲突解决方案：` first `、` last `、` error`|
+|`--output `,`-o`| 输出合并的术语表 |
+|`--strategy `| 冲突解决：` first `、` last `、` error`|
 
 ### export
 
@@ -251,7 +255,7 @@ llm-translate glossary merge \
 
 ### 版本控制
 
-将术语表纳入版本控制：
+将术语表包含在版本控制中：
 
 ```bash
 git add glossary.json

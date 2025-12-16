@@ -1,5 +1,9 @@
 # llm-translate file
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 단일 파일을 번역합니다.
 
 ## 개요
@@ -13,7 +17,7 @@ llm-translate file <input> [output] [options]
 | 인수 | 설명 |
 |----------|-------------|
 |`<input>`| 입력 파일 경로 (필수) |
-|`[output]`| 출력 파일 경로 (선택사항, 기본값: stdout) |
+|`[output]`| 출력 파일 경로 (선택사항, 기본값은 stdout) |
 
 ## 옵션
 
@@ -21,17 +25,18 @@ llm-translate file <input> [output] [options]
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`--source `,`-s`| 자동 감지 | 원본 언어 코드 |
-|`--target `,`-t`| 필수 | 대상 언어 코드 |
+|`--source-lang `,`-s`| 필수 | 소스 언어 코드 |
+|`--target-lang `,`-t`| 필수 | 대상 언어 코드 |
 |`--glossary `,`-g`| 없음 | 용어집 파일 경로 |
 
 ### 품질 옵션
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`--quality `,`-q`| 85 | 품질 임계값 (0-100) |
+|`--quality`| 85 | 품질 임계값 (0-100) |
 |`--max-iterations`| 4 | 최대 개선 반복 횟수 |
-|`--strict`| false | 임계값 미충족 시 실패 |
+|`--strict-quality`| false | 임계값 미달 시 실패 |
+|`--strict-glossary`| false | 용어집 용어 미적용 시 실패 |
 
 ### 제공자 옵션
 
@@ -44,55 +49,60 @@ llm-translate file <input> [output] [options]
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`--output `,`-o`| stdout | 출력 파일 경로 |
-|`--overwrite`| false | 기존 출력 덮어쓰기 |
-|`--dry-run`| false | 수행할 작업 표시 |
+|`--output `,`-o`| auto | 출력 파일 경로 |
+|`--format `,`-f`| auto | 출력 형식 강제 지정 (md\|html\|txt) |
+|`--dry-run`| false | 수행될 작업 표시 |
+|`--json`| false | 결과를 JSON으로 출력 |
+|`--verbose `,`-v`| false | 상세 로깅 활성화 |
+|`--quiet `,`-q`| false | 오류가 아닌 출력 억제 |
 
 ### 고급 옵션
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`--no-cache`| false | 프롬프트 캐싱 비활성화 |
-|`--chunk-size`| 1024 | 청크당 최대 토큰 |
+|`--no-cache`| false | 번역 캐시 비활성화 |
+|`--chunk-size`| 1024 | 청크당 최대 토큰 수 |
+|`--context`| 없음 | 번역을 위한 추가 컨텍스트 |
 
 ## 예제
 
 ### 기본 사용법
 
 ```bash
-# Translate to Korean, output to stdout
-llm-translate file README.md --target ko
+# Translate to Korean
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate to file
-llm-translate file README.md -o README.ko.md --target ko
+# With explicit output path
+llm-translate file README.md --output README.ko.md --source-lang en --target-lang ko
 
-# Specify source language
-llm-translate file doc.md -o doc.ja.md --source en --target ja
+# Specify source and target languages
+llm-translate file doc.md -o doc.ja.md --source-lang en --target-lang ja
 ```
 
-### 용어집 포함
+### 용어집 사용
 
 ```bash
 # Use glossary for consistent terminology
 llm-translate file api-docs.md -o api-docs.ko.md \
-  --target ko \
+  -s en -t ko \
   --glossary glossary.json
 ```
 
-### 품질 제어
+### 품질 관리
 
 ```bash
 # Higher quality threshold
 llm-translate file important.md -o important.ko.md \
-  --target ko \
+  -s en -t ko \
   --quality 95 \
   --max-iterations 6
 
 # Strict mode (fail if not met)
 llm-translate file legal.md -o legal.ko.md \
-  --target ko \
+  --source-lang en \
+  --target-lang ko \
   --quality 95 \
-  --strict
+  --strict-quality
 ```
 
 ### 제공자 선택
@@ -100,13 +110,13 @@ llm-translate file legal.md -o legal.ko.md \
 ```bash
 # Use Claude Sonnet
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider claude \
   --model claude-sonnet-4-5-20250929
 
 # Use OpenAI
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider openai \
   --model gpt-4o
 ```
@@ -114,11 +124,11 @@ llm-translate file doc.md -o doc.ko.md \
 ### stdin에서 입력
 
 ```bash
-# Pipe content
-cat doc.md | llm-translate file - --target ko > doc.ko.md
+# Pipe content (uses stdin mode when no TTY)
+cat doc.md | llm-translate -s en -t ko > doc.ko.md
 
 # Use with other tools
-curl https://example.com/doc.md | llm-translate file - --target ko
+curl https://example.com/doc.md | llm-translate -s en -t ko
 ```
 
 ## 출력 형식
@@ -181,15 +191,15 @@ llm-translate file doc.md -o doc.ko.md --target ko --verbose
 ### 파일을 찾을 수 없음
 
 ```bash
-$ llm-translate file missing.md --target ko
-Error: File not found: missing.md
+$ llm-translate file missing.md -s en -t ko
+Error: Could not read file 'missing.md'
 Exit code: 3
 ```
 
-### 품질 미충족 (엄격 모드)
+### 품질 기준 미달 (엄격 모드)
 
 ```bash
-$ llm-translate file doc.md -o doc.ko.md --target ko --quality 99 --strict
+$ llm-translate file doc.md -o doc.ko.md -s en -t ko --quality 99 --strict-quality
 Error: Quality threshold not met: 94/99
 Exit code: 4
 ```

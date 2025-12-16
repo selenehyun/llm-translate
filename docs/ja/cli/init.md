@@ -1,26 +1,30 @@
 # llm-translate init
 
-プロジェクトの設定ファイルを初期化します。
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
 
-## Synopsis
+プロジェクト用の設定ファイルを初期化します。
+
+## 概要
 
 ```bash
 llm-translate init [options]
 ```
 
-## Options
+## オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
 |`--provider `,`-p`| claude | デフォルトプロバイダー |
-|`--model `,`-m`| varies | デフォルトモデル |
+|`--model `,`-m`| 可変 | デフォルトモデル |
 |`--quality`| 85 | デフォルト品質しきい値 |
-|`--glossary`| none | 用語集テンプレートを作成 |
+|`--glossary`| なし | 用語集テンプレートを作成 |
 |`--force `,`-f`| false | 既存の設定を上書き |
 
-## Examples
+## 例
 
-### Basic Initialization
+### 基本的な初期化
 
 ```bash
 llm-translate init
@@ -42,19 +46,19 @@ llm-translate init
 }
 ```
 
-### With Provider
+### プロバイダーを指定
 
 ```bash
 llm-translate init --provider openai --model gpt-4o
 ```
 
-### With Glossary Template
+### 用語集テンプレートと一緒に
 
 ```bash
 llm-translate init --glossary
 ```
 
-また、 `glossary.json` も作成します：
+`glossary.json` も作成します：
 
 ```json
 {
@@ -72,15 +76,15 @@ llm-translate init --glossary
 }
 ```
 
-### Custom Quality
+### カスタム品質設定
 
 ```bash
 llm-translate init --quality 95
 ```
 
-## Interactive Mode
+## インタラクティブモード
 
-オプションなしで実行すると、initは対話モードで実行されます：
+オプションなしで実行すると、initはインタラクティブに動作します：
 
 ```
 $ llm-translate init
@@ -103,7 +107,7 @@ llm-translate Configuration Setup
 ✓ Created .translaterc.json
 ```
 
-## Output Files
+## 出力ファイル
 
 ### .translaterc.json
 
@@ -130,7 +134,7 @@ llm-translate Configuration Setup
 }
 ```
 
-### glossary.json (with --glossary)
+### glossary.json (--glossaryオプション使用時)
 
 ```json
 {
@@ -142,7 +146,7 @@ llm-translate Configuration Setup
 }
 ```
 
-## Overwriting Existing Config
+## 既存設定の上書き
 
 ```bash
 # Will fail if config exists

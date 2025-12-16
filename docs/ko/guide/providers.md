@@ -1,21 +1,25 @@
 # 제공자
 
-llm-translate는 여러 LLM 제공자를 지원합니다. 각 제공자는 서로 다른 장점과 트레이드오프를 가지고 있습니다.
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
+llm-translate는 여러 LLM 제공자를 지원합니다. 각각은 서로 다른 장점과 트레이드오프를 가지고 있습니다.
 
 ## 지원되는 제공자
 
 | 제공자 | 캐싱 | 최적 용도 | 설정 복잡도 |
 |----------|---------|----------|------------------|
-| Claude | 전체 | 품질 + 비용 | 쉬움 |
-| OpenAI | 자동 | 에코시스템 | 쉬움 |
-| Ollama | 없음 | 프라이버시/오프라인 | 중간 |
+| Claude | 완전 지원 | 품질 + 비용 | 쉬움 |
+| OpenAI | 자동 | 생태계 | 쉬움 |
+| Ollama | 없음 | 프라이버시/오프라인 | 보통 |
 
 ## Claude (권장)
 
-### Claude를 선택하는 이유
+### Claude를 선택하는 이유?
 
 - **프롬프트 캐싱**: 최대 90% 비용 절감
-- **높은 품질**: 우수한 번역 정확도
+- **높은 품질**: 뛰어난 번역 정확도
 - **긴 컨텍스트**: 200K 토큰 컨텍스트 윈도우
 - **다양한 계층**: Haiku (빠름), Sonnet (균형), Opus (최고)
 
@@ -42,9 +46,9 @@ llm-translate file doc.md --target ko --model claude-opus-4-5-20251101
 
 | 모델 | 사용 사례 |
 |-------|----------|
-| Haiku | README 파일, 간단한 문서, 대량 처리 |
-| Sonnet | 기술 문서, API 참고자료 |
-| Opus | 법률, 마케팅, 뉘앙스 있는 콘텐츠 |
+| Haiku | README 파일, 간단한 문서, 대용량 |
+| Sonnet | 기술 문서, API 참조 |
+| Opus | 법률, 마케팅, 미묘한 내용 |
 
 ## OpenAI
 
@@ -64,93 +68,81 @@ llm-translate file doc.md --target ko --provider openai --model gpt-4o
 
 | 모델 | 속도 | 품질 | 비용 |
 |-------|-------|---------|------|
-| GPT-4o-mini | 빠름 | 좋음 | 매우 낮음 |
-| GPT-4o | 중간 | 우수 | 중간 |
-| gpt-4-turbo | 중간 | 우수 | 높음 |
+| gpt-4o-mini | 빠름 | 좋음 | 매우 낮음 |
+| gpt-4o | 보통 | 뛰어남 | 보통 |
+| gpt-4-turbo | 보통 | 뛰어남 | 높음 |
 
 ### 사용 시기
 
-- 이미 다른 서비스에 OpenAI를 사용 중인 경우
+- 다른 서비스에서 이미 OpenAI를 사용하는 경우
 - 특정 OpenAI 기능이 필요한 경우
 - Azure OpenAI를 선호하는 경우 (사용자 정의 baseUrl 설정)
 
 ## Ollama
 
-프라이버시 또는 오프라인 사용을 위한 로컬 자체 호스팅 LLM입니다.
+프라이버시나 오프라인 사용을 위한 로컬, 자체 호스팅 LLM입니다. API 키가 필요하지 않습니다.
 
-### 설정
+::: warning 모델에 따라 품질이 달라집니다
+Ollama 번역 품질은 **모델 선택에 크게 의존합니다**. 신뢰할 수 있는 번역 결과를 위해서는:
 
-1. Ollama 설치:
+- **최소**: 14B+ 매개변수 모델 (예:`qwen2.5:14b `,` llama3.1:14b`)
+- **권장**: 32B+ 모델 (예:`qwen2.5:32b `,` llama3.3:70b`)
+- **권장하지 않음**: 7B 미만 모델은 일관성이 없고 종종 사용할 수 없는 번역을 생성합니다
+
+작은 모델(3B, 7B)은 간단한 내용에서는 작동할 수 있지만 기술 문서에서는 자주 실패하거나, 불완전한 출력을 생성하거나, 형식 지침을 무시합니다.
+:::
+
+### 빠른 설정
 
 ```bash
-# macOS
+# 1. Install (macOS)
 brew install ollama
 
-# Linux
-curl -fsSL https://ollama.ai/install.sh | sh
-```
+# 2. Pull qwen2.5:14b (recommended)
+ollama pull qwen2.5:14b
 
-2. 모델 다운로드:
-
-```bash
-ollama pull llama3.1
-```
-
-3. 서버 시작:
-
-```bash
-ollama serve
-```
-
-### 사용법
-
-```bash
-export OLLAMA_BASE_URL=http://localhost:11434
-
-llm-translate file doc.md --target ko --provider ollama --model llama3.1
+# 3. Translate
+llm-translate file doc.md -s en -t ko --provider ollama --model qwen2.5:14b
 ```
 
 ### 권장 모델
 
-| 모델 | 파라미터 | 품질 | 속도 |
-|-------|-----------|---------|-------|
-| llama3.1 | 8B | 좋음 | 빠름 |
-| llama3.1:70b | 70B | 우수 | 느림 |
-| mistral | 7B | 좋음 | 빠름 |
-| mixtral | 8x7B | 매우 좋음 | 중간 |
-
-### 제한사항
-
-- 프롬프트 캐싱 없음 (대용량 문서의 경우 높은 비용)
-- 모델에 따라 품질이 달라짐
-- 좋은 성능을 위해 로컬 GPU 필요
-- 일부 모델의 제한된 언어 지원
+| 모델 | RAM | 품질 | 최적 용도 |
+|-------|-----|---------|----------|
+|`qwen2.5:14b`| 16GB | 매우 좋음 | **최고의 균형 (권장)** |
+|`qwen2.5:32b`| 32GB | 뛰어남 | 더 높은 품질 |
+|`llama3.1:8b`| 8GB | 좋음 | 가벼운 무게 |
+|`llama3.2`| 4GB | 보통 | 간단한 내용만 |
 
 ### 사용 시기
 
 - 민감한/개인 문서
 - 오프라인 환경
-- 비용 최적화 (API 요금 없음)
-- 실험
+- 비용 최적화 (API 수수료 없음)
+- 간단하거나 보통 복잡도의 내용
+
+::: tip 전체 가이드
+완전한 설정 지침, GPU 최적화, 문제 해결 및 고급 구성은 [Ollama를 사용한 로컬 번역](./ollama)을 참조하세요.
+:::
 
 ## 제공자 비교
 
 ### 품질
 
 ```
-Opus > Sonnet ≈ GPT-4o > Haiku ≈ GPT-4o-mini > Llama3.1
+Opus > Sonnet ≈ GPT-4o > Haiku ≈ GPT-4o-mini > Qwen2.5:32b > Qwen2.5:14b
 ```
 
-### 비용 (1M 토큰당)
+### 비용 (100만 토큰당)
 
 ```
-Ollama ($0) < Haiku ($1) < GPT-4o-mini ($0.15) < Sonnet ($3) < GPT-4o ($2.5) < Opus ($15)
+Ollama ($0) < GPT-4o-mini ($0.15) < Haiku ($1) < GPT-4o ($2.5) < Sonnet ($3) < Opus ($15)
 ```
 
 ### 속도
 
 ```
-Haiku ≈ GPT-4o-mini > Sonnet ≈ GPT-4o > Opus > Ollama (varies)
+Haiku ≈ GPT-4o-mini > Sonnet ≈ GPT-4o > Opus > Ollama (varies with hardware)
 ```
 
 ## 제공자 전환
@@ -159,9 +151,9 @@ Haiku ≈ GPT-4o-mini > Sonnet ≈ GPT-4o > Opus > Ollama (varies)
 
 ```bash
 # Different providers
-llm-translate file doc.md --target ko --provider claude
-llm-translate file doc.md --target ko --provider openai
-llm-translate file doc.md --target ko --provider ollama
+llm-translate file doc.md -s en -t ko --provider claude
+llm-translate file doc.md -s en -t ko --provider openai
+llm-translate file doc.md -s en -t ko --provider ollama
 ```
 
 ### 설정 파일
@@ -197,9 +189,9 @@ const engine = new TranslationEngine({
 });
 ```
 
-## 폴백 설정
+## 폴백 구성
 
-안정성을 위해 폴백 제공자를 설정합니다:
+신뢰성을 위한 폴백 제공자를 구성합니다:
 
 ```json
 {

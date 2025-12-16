@@ -1,8 +1,12 @@
 # llm-translate dir
 
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
 翻译目录中的所有文件。
 
-## 概要
+## 语法
 
 ```bash
 llm-translate dir <input> <output> [options]
@@ -21,7 +25,7 @@ llm-translate dir <input> <output> [options]
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
-|`-s, --source-lang <lang>`| 自动检测 | 源语言代码 |
+|`-s, --source-lang <lang>`| 配置默认值 | 源语言代码 |
 |`-t, --target-lang <lang>`| 必需 | 目标语言代码 |
 
 ### 翻译选项
@@ -61,7 +65,7 @@ llm-translate dir <input> <output> [options]
 |--------|---------|-------------|
 |`-f, --format <fmt>`| auto | 强制输出格式 (md\|html\|txt) |
 |`--dry-run`| false | 显示将要翻译的内容 |
-|`--json`| false | 将结果输出为 JSON |
+|`--json`| false | 以 JSON 格式输出结果 |
 |`-v, --verbose`| false | 启用详细日志 |
 |`-q, --quiet`| false | 抑制非错误输出 |
 
@@ -71,23 +75,23 @@ llm-translate dir <input> <output> [options]
 
 ```bash
 # Translate all markdown files
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # With glossary
-llm-translate dir ./docs ./docs-ko -t ko -g glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko -g glossary.json
 ```
 
 ### 文件选择
 
 ```bash
 # Custom include pattern
-llm-translate dir ./docs ./docs-ko -t ko --include "**/*.md"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "**/*.md"
 
 # Multiple patterns
-llm-translate dir ./docs ./docs-ko -t ko --include "*.md,*.markdown,*.mdx"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "*.md,*.markdown,*.mdx"
 
 # Exclude certain directories
-llm-translate dir ./docs ./docs-ko -t ko \
+llm-translate dir ./docs ./docs-ko -s en -t ko \
   --exclude "node_modules/**,dist/**,drafts/**"
 ```
 
@@ -95,27 +99,27 @@ llm-translate dir ./docs ./docs-ko -t ko \
 
 ```bash
 # Process 5 files in parallel
-llm-translate dir ./docs ./docs-ko -t ko --parallel 5
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 5
 
 # Sequential processing (for rate-limited APIs)
-llm-translate dir ./docs ./docs-ko -t ko --parallel 1
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 1
 ```
 
 ### 质量设置
 
 ```bash
 # High quality for important docs
-llm-translate dir ./docs ./docs-ko -t ko --quality 95 --max-iterations 6
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 95 --max-iterations 6
 
 # Faster processing with lower threshold
-llm-translate dir ./docs ./docs-ko -t ko --quality 70 --max-iterations 2
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 70 --max-iterations 2
 ```
 
 ### 预览模式
 
 ```bash
 # Show what would be translated
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 输出：
@@ -199,21 +203,21 @@ llm-translate dir ./docs ./docs-ko -t ko --json
 ### 1. 先预览
 
 ```bash
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 ### 2. 使用适当的并行度
 
-- 速率限制的 API：`--parallel 1-2`
+- 有速率限制的 API：`--parallel 1-2`
 - 高限制：`--parallel 5-10`
-- 本地 (Ollama)：`--parallel 1`（模型受限）
+- 本地 (Ollama)：`--parallel 1`（受模型限制）
 
 ### 3. 处理大型项目
 
 ```bash
 # Split by subdirectory for better control
-llm-translate dir ./docs/guide ./docs-ko/guide -t ko
-llm-translate dir ./docs/api ./docs-ko/api -t ko
+llm-translate dir ./docs/guide ./docs-ko/guide -s en -t ko
+llm-translate dir ./docs/api ./docs-ko/api -s en -t ko
 ```
 
 ### 4. 利用缓存
@@ -222,18 +226,18 @@ llm-translate dir ./docs/api ./docs-ko/api -t ko
 
 ```bash
 # First run: translates all
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Second run: uses cache for unchanged content
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 ```
 
-### 5. 按内容类型的质量
+### 5. 根据内容类型调整质量
 
 ```bash
 # High quality for user-facing docs
-llm-translate dir ./docs/public ./docs-ko/public -t ko --quality 95
+llm-translate dir ./docs/public ./docs-ko/public -s en -t ko --quality 95
 
 # Standard quality for internal docs
-llm-translate dir ./docs/internal ./docs-ko/internal -t ko --quality 80
+llm-translate dir ./docs/internal ./docs-ko/internal -s en -t ko --quality 80
 ```

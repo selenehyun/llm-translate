@@ -1,6 +1,10 @@
 # CLI 参考
 
-llm-translate 提供了一个命令行界面用于翻译文档。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+llm-translate 提供了用于翻译文档的命令行界面。
 
 ## 安装
 
@@ -58,20 +62,20 @@ llm-translate glossary <subcommand> [options]
 
 ```bash
 # Translate a file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
 # Translate with glossary
 llm-translate file docs/guide.md -o docs/guide.ja.md \
-  --target ja --glossary glossary.json
+  -s en -t ja --glossary glossary.json
 
 # Batch translate a directory
-llm-translate dir ./docs ./docs-ko --target ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Initialize config
 llm-translate init --provider claude
 
 # Validate glossary
-llm-translate glossary validate --glossary glossary.json
+llm-translate glossary validate glossary.json
 ```
 
 ## 退出代码
@@ -79,10 +83,10 @@ llm-translate glossary validate --glossary glossary.json
 | 代码 | 描述 |
 |------|-------------|
 | 0 | 成功 |
-| 1 | 常规错误 |
+| 1 | 一般错误 |
 | 2 | 无效参数 |
 | 3 | 文件未找到 |
-| 4 | 质量阈值未达到（严格模式） |
+| 4 | 未达到质量阈值（严格模式） |
 | 5 | 提供商/API 错误 |
 | 6 | 术语表验证失败 |
 
@@ -93,19 +97,15 @@ llm-translate glossary validate --glossary glossary.json
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 OPENAI_API_KEY=sk-xxxxx
 OLLAMA_BASE_URL=http://localhost:11434
-
-# Defaults
-LLM_TRANSLATE_PROVIDER=claude
-LLM_TRANSLATE_MODEL=claude-haiku-4-5-20251001
 ```
 
 ## 配置优先级
 
-设置按以下顺序应用（后面的覆盖前面的）：
+设置按以下顺序应用（后者覆盖前者）：
 
 1. 内置默认值
 2. 配置文件 (`.translaterc.json`)
 3. 环境变量
 4. CLI 参数
 
-详见[配置](../guide/configuration)。
+详情请参见[配置](../guide/configuration)。

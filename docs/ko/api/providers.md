@@ -1,5 +1,9 @@
 # 제공자
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 다양한 AI 서비스를 위한 LLM 제공자 구현입니다.
 
 ## 개요
@@ -20,7 +24,7 @@ interface LLMProvider {
 
 ## Claude 제공자
 
-권장되는 제공자이며, 프롬프트 캐싱을 완벽하게 지원합니다.
+프롬프트 캐싱을 완전히 지원하는 권장 제공자입니다.
 
 ### 설정
 
@@ -118,11 +122,11 @@ interface OpenAIProviderConfig {
 
 ### 자동 캐싱
 
-OpenAI는 1024 토큰 이상의 프롬프트에 대해 캐싱을 자동으로 처리합니다.
+OpenAI는 1024 토큰을 초과하는 프롬프트에 대해 자동으로 캐싱을 처리합니다.
 
 ## Ollama 제공자
 
-로컬 자체 호스팅 모델용입니다.
+로컬, 자체 호스팅 모델을 위한 제공자입니다.
 
 ### 설정
 
@@ -158,11 +162,11 @@ ollama pull mistral
 ollama pull codellama
 ```
 
-### 제한 사항
+### 제한사항
 
 - 프롬프트 캐싱 지원 없음
 - 모델에 따라 품질이 다름
-- 제한된 컨텍스트 윈도우 (모델 종속)
+- 제한된 컨텍스트 윈도우 (모델에 따라 다름)
 
 ## 제공자 인터페이스
 
@@ -217,7 +221,7 @@ interface ModelInfo {
 
 ## 사용자 정의 제공자
 
-자신의 제공자를 구현합니다:
+자체 제공자를 구현하세요:
 
 ```typescript
 import type { LLMProvider, ChatRequest, ChatResponse } from '@llm-translate/cli';
@@ -267,15 +271,15 @@ class CustomProvider implements LLMProvider {
 | 사용 사례 | 권장 제공자 | 모델 |
 |----------|---------------------|-------|
 | 비용 효율적 | Claude | Haiku 4.5 |
-| 높은 품질 | Claude | Sonnet 4.5 |
+| 고품질 | Claude | Sonnet 4.5 |
 | OpenAI 생태계 | OpenAI | GPT-4o |
 | 예산 제약 | OpenAI | GPT-4o-mini |
-| 개인정보 보호/오프라인 | Ollama | Llama 3.1 |
+| 프라이버시/오프라인 | Ollama | Llama 3.1 |
 | 엔터프라이즈 | Claude/OpenAI | 다양함 |
 
 ## 오류 처리
 
-모든 제공자는 `TranslationError` 을 발생시킵니다:
+모든 제공자는 `TranslationError` 를 발생시킵니다:
 
 ```typescript
 import { TranslationError, ErrorCode } from '@llm-translate/cli';

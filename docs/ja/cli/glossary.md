@@ -1,6 +1,10 @@
-# llm-translate 用語集
+# llm-translate glossary
 
-一貫した用語の管理のための用語集ファイルを管理します。
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
+一貫した用語使用のための用語集ファイルを管理します。
 
 ## 概要
 
@@ -21,8 +25,8 @@ llm-translate glossary list --glossary glossary.json
 オプション:
 | オプション | 説明 |
 |--------|-------------|
-|`--glossary `,`-g`| 用語集ファイルへのパス（必須） |
-|`--target `,`-t`| ターゲット言語でフィルタリング |
+|`--glossary `,`-g`| 用語集ファイルのパス（必須） |
+|`--target `,`-t`| 対象言語でフィルタリング |
 |`--format `| 出力形式:` table `,` json`|
 
 例:
@@ -55,7 +59,7 @@ DNT = Do Not Translate, CS = Case Sensitive
 
 ### validate
 
-用語集ファイルの構造とコンテンツを検証します。
+用語集ファイルの構造と内容を検証します。
 
 ```bash
 llm-translate glossary validate --glossary glossary.json
@@ -64,8 +68,8 @@ llm-translate glossary validate --glossary glossary.json
 オプション:
 | オプション | 説明 |
 |--------|-------------|
-|`--glossary `,`-g`| 用語集ファイルへのパス（必須） |
-|`--strict`| 警告で失敗 |
+|`--glossary `,`-g`| 用語集ファイルのパス（必須） |
+|`--strict`| 警告時に失敗 |
 
 例:
 
@@ -103,8 +107,8 @@ llm-translate glossary add <source> [options]
 オプション:
 | オプション | 説明 |
 |--------|-------------|
-|`--glossary `,`-g`| 用語集ファイルへのパス（必須） |
-|`--target `| ターゲット翻訳（形式:` lang=value`） |
+|`--glossary `,`-g`| 用語集ファイルのパス（必須） |
+|`--target `| 対象翻訳（形式:` lang=value`） |
 |`--context`| 用語のコンテキスト |
 |`--dnt`| 「翻訳しない」としてマーク |
 |`--case-sensitive`| 大文字小文字を区別するとしてマーク |
@@ -155,10 +159,10 @@ llm-translate glossary update <source> [options]
 オプション:
 | オプション | 説明 |
 |--------|-------------|
-|`--glossary `,`-g`| 用語集ファイルへのパス（必須） |
-|`--target`| ターゲット翻訳を更新 |
+|`--glossary `,`-g`| 用語集ファイルのパス（必須） |
+|`--target`| 対象翻訳を更新 |
 |`--context`| コンテキストを更新 |
-|`--dnt`| 翻訳しないを設定/解除 |
+|`--dnt`| 翻訳しない設定を設定/解除 |
 
 例:
 
@@ -251,7 +255,7 @@ llm-translate glossary merge \
 
 ### バージョン管理
 
-用語集をバージョン管理に含めます:
+用語集をバージョン管理に含める:
 
 ```bash
 git add glossary.json

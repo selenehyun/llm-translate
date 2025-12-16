@@ -1,124 +1,128 @@
 # llm-translate dir
 
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
 ディレクトリ内のすべてのファイルを翻訳します。
 
-## Synopsis
+## 概要
 
 ```bash
 llm-translate dir <input> <output> [options]
 ```
 
-## Arguments
+## 引数
 
-| Argument | Description |
+| 引数 | 説明 |
 |----------|-------------|
 |`<input>`| 入力ディレクトリパス（必須） |
 |`<output>`| 出力ディレクトリパス（必須） |
 
-## Options
+## オプション
 
-### Language Options
+### 言語オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`-s, --source-lang <lang>`| auto-detect | ソース言語コード |
-|`-t, --target-lang <lang>`| required | ターゲット言語コード |
+|`-s, --source-lang <lang>`| 設定のデフォルト | ソース言語コード |
+|`-t, --target-lang <lang>`| 必須 | ターゲット言語コード |
 
-### Translation Options
+### 翻訳オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`-g, --glossary <path>`| none | 用語集ファイルのパス |
-|`-p, --provider <name>`|` claude`| LLMプロバイダー（claude\|openai\|ollama） |
-|`-m, --model <name>`| provider default | モデル名 |
-|`--context <text>`| none | 翻訳用の追加コンテキスト |
+|`-g, --glossary <path>`| なし | 用語集ファイルのパス |
+|`-p, --provider <name>`|` claude`| LLMプロバイダー (claude\|openai\|ollama) |
+|`-m, --model <name>`| プロバイダーのデフォルト | モデル名 |
+|`--context <text>`| なし | 翻訳のための追加コンテキスト |
 
-### Quality Options
+### 品質オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
 |`--quality <0-100>`| 85 | 品質しきい値 |
-|`--max-iterations <n>`| 4 | 最大改善反復回数 |
+|`--max-iterations <n>`| 4 | 最大改良反復回数 |
 
-### File Selection
+### ファイル選択
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
 |`--include <patterns>`|`*.md,*.markdown`| 含めるファイルパターン（カンマ区切り） |
-|`--exclude <patterns>`| none | 除外するファイルパターン（カンマ区切り） |
+|`--exclude <patterns>`| なし | 除外するファイルパターン（カンマ区切り） |
 
-### Processing Options
+### 処理オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`--parallel <n>`| 3 | 並列ファイル処理数 |
+|`--parallel <n>`| 3 | 並列ファイル処理 |
 |`--chunk-size <tokens>`| 1024 | チャンクあたりの最大トークン数 |
 |`--no-cache`| false | 翻訳キャッシュを無効化 |
 
-### Output Options
+### 出力オプション
 
-| Option | Default | Description |
+| オプション | デフォルト | 説明 |
 |--------|---------|-------------|
-|`-f, --format <fmt>`| auto | 出力形式を強制（md\|html\|txt） |
-|`--dry-run`| false | 翻訳対象を表示 |
+|`-f, --format <fmt>`| auto | 出力フォーマットを強制 (md\|html\|txt) |
+|`--dry-run`| false | 翻訳される内容を表示 |
 |`--json`| false | 結果をJSONで出力 |
 |`-v, --verbose`| false | 詳細ログを有効化 |
 |`-q, --quiet`| false | エラー以外の出力を抑制 |
 
-## Examples
+## 例
 
-### Basic Usage
+### 基本的な使用方法
 
 ```bash
 # Translate all markdown files
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # With glossary
-llm-translate dir ./docs ./docs-ko -t ko -g glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko -g glossary.json
 ```
 
-### File Selection
+### ファイル選択
 
 ```bash
 # Custom include pattern
-llm-translate dir ./docs ./docs-ko -t ko --include "**/*.md"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "**/*.md"
 
 # Multiple patterns
-llm-translate dir ./docs ./docs-ko -t ko --include "*.md,*.markdown,*.mdx"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "*.md,*.markdown,*.mdx"
 
 # Exclude certain directories
-llm-translate dir ./docs ./docs-ko -t ko \
+llm-translate dir ./docs ./docs-ko -s en -t ko \
   --exclude "node_modules/**,dist/**,drafts/**"
 ```
 
-### Parallel Processing
+### 並列処理
 
 ```bash
 # Process 5 files in parallel
-llm-translate dir ./docs ./docs-ko -t ko --parallel 5
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 5
 
 # Sequential processing (for rate-limited APIs)
-llm-translate dir ./docs ./docs-ko -t ko --parallel 1
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 1
 ```
 
-### Quality Settings
+### 品質設定
 
 ```bash
 # High quality for important docs
-llm-translate dir ./docs ./docs-ko -t ko --quality 95 --max-iterations 6
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 95 --max-iterations 6
 
 # Faster processing with lower threshold
-llm-translate dir ./docs ./docs-ko -t ko --quality 70 --max-iterations 2
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 70 --max-iterations 2
 ```
 
-### Preview Mode
+### プレビューモード
 
 ```bash
 # Show what would be translated
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
-Output:
+出力:
 ```
 Dry run mode - no translation will be performed
 
@@ -130,7 +134,7 @@ Files to translate:
 Total: 3 file(s)
 ```
 
-## Output Structure
+## 出力構造
 
 ディレクトリ構造はデフォルトで保持されます：
 
@@ -145,9 +149,9 @@ docs/                      docs-ko/
     └── reference.md           └── reference.md
 ```
 
-## Progress Reporting
+## 進捗レポート
 
-### Normal Mode
+### 通常モード
 
 ```
 ℹ Found 5 file(s) to translate
@@ -171,7 +175,7 @@ docs/                      docs-ko/
 ────────────────────────────────────────────────────────
 ```
 
-### JSON Output
+### JSON出力
 
 ```bash
 llm-translate dir ./docs ./docs-ko -t ko --json
@@ -194,46 +198,46 @@ llm-translate dir ./docs ./docs-ko -t ko --json
 }
 ```
 
-## Best Practices
+## ベストプラクティス
 
-### 1. Preview First
+### 1. まずプレビューを実行
 
 ```bash
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
-### 2. Use Appropriate Parallelism
+### 2. 適切な並列度を使用
 
-- レート制限API:`--parallel 1-2`
+- レート制限のあるAPI:`--parallel 1-2`
 - 高い制限:`--parallel 5-10`
-- ローカル（Ollama）:`--parallel 1`（モデル制限）
+- ローカル (Ollama):`--parallel 1`(モデル制限あり)
 
-### 3. Handle Large Projects
+### 3. 大規模プロジェクトの処理
 
 ```bash
 # Split by subdirectory for better control
-llm-translate dir ./docs/guide ./docs-ko/guide -t ko
-llm-translate dir ./docs/api ./docs-ko/api -t ko
+llm-translate dir ./docs/guide ./docs-ko/guide -s en -t ko
+llm-translate dir ./docs/api ./docs-ko/api -s en -t ko
 ```
 
-### 4. Leverage Caching
+### 4. キャッシングの活用
 
-キャッシュにより、変更されていないコンテンツをスキップできます：
+キャッシュにより変更されていないコンテンツをスキップできます：
 
 ```bash
 # First run: translates all
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Second run: uses cache for unchanged content
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 ```
 
-### 5. Quality by Content Type
+### 5. コンテンツタイプ別の品質設定
 
 ```bash
 # High quality for user-facing docs
-llm-translate dir ./docs/public ./docs-ko/public -t ko --quality 95
+llm-translate dir ./docs/public ./docs-ko/public -s en -t ko --quality 95
 
 # Standard quality for internal docs
-llm-translate dir ./docs/internal ./docs-ko/internal -t ko --quality 80
+llm-translate dir ./docs/internal ./docs-ko/internal -s en -t ko --quality 80
 ```

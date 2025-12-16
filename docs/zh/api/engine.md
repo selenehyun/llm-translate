@@ -1,5 +1,9 @@
 # TranslationEngine
 
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
 翻译操作的主要入口点。
 
 ## 构造函数
@@ -194,7 +198,7 @@ console.log(`Average quality: ${results.summary.averageQuality}`);
 
 ## 事件
 
-TranslationEngine 扩展 EventEmitter：
+TranslationEngine 继承自 EventEmitter：
 
 ```typescript
 engine.on('chunk:start', (data) => {

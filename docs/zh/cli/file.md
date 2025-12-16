@@ -1,8 +1,12 @@
-# llm-translate 文件
+# llm-translate file
+
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
 
 翻译单个文件。
 
-## 概要
+## 语法
 
 ```bash
 llm-translate file <input> [output] [options]
@@ -21,53 +25,58 @@ llm-translate file <input> [output] [options]
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
-|`--source `,`-s`| 自动检测 | 源语言代码 |
-|`--target `,`-t`| 必需 | 目标语言代码 |
+|`--source-lang `,`-s`| 必需 | 源语言代码 |
+|`--target-lang `,`-t`| 必需 | 目标语言代码 |
 |`--glossary `,`-g`| 无 | 术语表文件路径 |
 
 ### 质量选项
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
-|`--quality `,`-q`| 85 | 质量阈值（0-100） |
+|`--quality`| 85 | 质量阈值（0-100） |
 |`--max-iterations`| 4 | 最大优化迭代次数 |
-|`--strict`| false | 未达到阈值时失败 |
+|`--strict-quality`| false | 未达到阈值时失败 |
+|`--strict-glossary`| false | 术语表术语未应用时失败 |
 
 ### 提供商选项
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
 |`--provider `,`-p`| claude | 提供商名称 |
-|`--model `,`-m`| 因提供商而异 | 模型标识符 |
+|`--model `,`-m`| 不定 | 模型标识符 |
 
 ### 输出选项
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
-|`--output `,`-o`| stdout | 输出文件路径 |
-|`--overwrite`| false | 覆盖现有输出 |
+|`--output `,`-o`| 自动 | 输出文件路径 |
+|`--format `,`-f`| 自动 | 强制输出格式（md\|html\|txt） |
 |`--dry-run`| false | 显示将要执行的操作 |
+|`--json`| false | 以 JSON 格式输出结果 |
+|`--verbose `,`-v`| false | 启用详细日志记录 |
+|`--quiet `,`-q`| false | 抑制非错误输出 |
 
 ### 高级选项
 
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
-|`--no-cache`| false | 禁用提示缓存 |
+|`--no-cache`| false | 禁用翻译缓存 |
 |`--chunk-size`| 1024 | 每个分块的最大令牌数 |
+|`--context`| 无 | 翻译的附加上下文 |
 
 ## 示例
 
 ### 基本用法
 
 ```bash
-# Translate to Korean, output to stdout
-llm-translate file README.md --target ko
+# Translate to Korean
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate to file
-llm-translate file README.md -o README.ko.md --target ko
+# With explicit output path
+llm-translate file README.md --output README.ko.md --source-lang en --target-lang ko
 
-# Specify source language
-llm-translate file doc.md -o doc.ja.md --source en --target ja
+# Specify source and target languages
+llm-translate file doc.md -o doc.ja.md --source-lang en --target-lang ja
 ```
 
 ### 使用术语表
@@ -75,7 +84,7 @@ llm-translate file doc.md -o doc.ja.md --source en --target ja
 ```bash
 # Use glossary for consistent terminology
 llm-translate file api-docs.md -o api-docs.ko.md \
-  --target ko \
+  -s en -t ko \
   --glossary glossary.json
 ```
 
@@ -84,15 +93,16 @@ llm-translate file api-docs.md -o api-docs.ko.md \
 ```bash
 # Higher quality threshold
 llm-translate file important.md -o important.ko.md \
-  --target ko \
+  -s en -t ko \
   --quality 95 \
   --max-iterations 6
 
 # Strict mode (fail if not met)
 llm-translate file legal.md -o legal.ko.md \
-  --target ko \
+  --source-lang en \
+  --target-lang ko \
   --quality 95 \
-  --strict
+  --strict-quality
 ```
 
 ### 提供商选择
@@ -100,25 +110,25 @@ llm-translate file legal.md -o legal.ko.md \
 ```bash
 # Use Claude Sonnet
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider claude \
   --model claude-sonnet-4-5-20250929
 
 # Use OpenAI
 llm-translate file doc.md -o doc.ko.md \
-  --target ko \
+  -s en -t ko \
   --provider openai \
   --model gpt-4o
 ```
 
-### 从 stdin 读取
+### 从 stdin 输入
 
 ```bash
-# Pipe content
-cat doc.md | llm-translate file - --target ko > doc.ko.md
+# Pipe content (uses stdin mode when no TTY)
+cat doc.md | llm-translate -s en -t ko > doc.ko.md
 
 # Use with other tools
-curl https://example.com/doc.md | llm-translate file - --target ko
+curl https://example.com/doc.md | llm-translate -s en -t ko
 ```
 
 ## 输出格式
@@ -181,15 +191,15 @@ llm-translate file doc.md -o doc.ko.md --target ko --verbose
 ### 文件未找到
 
 ```bash
-$ llm-translate file missing.md --target ko
-Error: File not found: missing.md
+$ llm-translate file missing.md -s en -t ko
+Error: Could not read file 'missing.md'
 Exit code: 3
 ```
 
 ### 质量未达标（严格模式）
 
 ```bash
-$ llm-translate file doc.md -o doc.ko.md --target ko --quality 99 --strict
+$ llm-translate file doc.md -o doc.ko.md -s en -t ko --quality 99 --strict-quality
 Error: Quality threshold not met: 94/99
 Exit code: 4
 ```

@@ -1,6 +1,10 @@
 # llm-translate init
 
-프로젝트의 설정 파일을 초기화합니다.
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
+프로젝트를 위한 설정 파일을 초기화합니다.
 
 ## 개요
 
@@ -48,13 +52,13 @@ llm-translate init
 llm-translate init --provider openai --model gpt-4o
 ```
 
-### 용어집 템플릿 포함
+### 용어집 템플릿과 함께
 
 ```bash
 llm-translate init --glossary
 ```
 
-또한 `glossary.json` 을 생성합니다:
+또한 `glossary.json` 를 생성합니다:
 
 ```json
 {
@@ -80,7 +84,7 @@ llm-translate init --quality 95
 
 ## 대화형 모드
 
-옵션 없이 init을 실행하면 대화형으로 진행됩니다:
+옵션 없이 실행하면 init가 대화형으로 실행됩니다:
 
 ```
 $ llm-translate init
@@ -130,7 +134,7 @@ llm-translate Configuration Setup
 }
 ```
 
-### glossary.json (--glossary 포함)
+### glossary.json (--glossary와 함께)
 
 ```json
 {

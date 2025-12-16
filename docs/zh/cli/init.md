@@ -1,5 +1,9 @@
 # llm-translate init
 
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
 为您的项目初始化配置文件。
 
 ## 概要
@@ -13,9 +17,9 @@ llm-translate init [options]
 | 选项 | 默认值 | 描述 |
 |--------|---------|-------------|
 |`--provider `,`-p`| claude | 默认提供商 |
-|`--model `,`-m`| 因提供商而异 | 默认模型 |
+|`--model `,`-m`| 不定 | 默认模型 |
 |`--quality`| 85 | 默认质量阈值 |
-|`--glossary`| 无 | 创建术语表模板 |
+|`--glossary`| none | 创建术语表模板 |
 |`--force `,`-f`| false | 覆盖现有配置 |
 
 ## 示例
@@ -80,7 +84,7 @@ llm-translate init --quality 95
 
 ## 交互模式
 
-不带选项运行 init 时，将进入交互模式：
+不带选项时，init 以交互方式运行：
 
 ```
 $ llm-translate init

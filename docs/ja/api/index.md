@@ -1,6 +1,10 @@
 # API リファレンス
 
-llm-translate は Node.js アプリケーション内でプログラム的に使用できます。
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
+llm-translateはNode.jsアプリケーションでプログラム的に使用できます。
 
 ## インストール
 
@@ -49,7 +53,7 @@ await engine.translateContent(content, options);
 
 ### [TranslationAgent](./agent)
 
-Self-Refine ループを備えた低レベルの翻訳エージェントです。
+Self-Refineループを持つ低レベル翻訳エージェントです。
 
 ```typescript
 const agent = new TranslationAgent({ provider, qualityThreshold });
@@ -58,7 +62,7 @@ const result = await agent.translate(request);
 
 ### [Providers](./providers)
 
-LLM プロバイダーの実装です。
+LLMプロバイダーの実装です。
 
 ```typescript
 import {
@@ -160,8 +164,8 @@ try {
 |`INVALID_CONFIG`| 設定の検証に失敗しました |
 |`GLOSSARY_NOT_FOUND`| 用語集ファイルが見つかりません |
 |`GLOSSARY_INVALID`| 用語集の検証に失敗しました |
-|`PROVIDER_AUTH_FAILED`| API キーが無効です |
+|`PROVIDER_AUTH_FAILED`| APIキーが無効です |
 |`PROVIDER_RATE_LIMITED`| レート制限を超過しました |
-|`PROVIDER_ERROR`| プロバイダーの一般的なエラー |
-|`QUALITY_THRESHOLD_NOT_MET`| 翻訳品質が品質しきい値を下回っています |
-|`PARSE_ERROR`| ドキュメント解析に失敗しました |
+|`PROVIDER_ERROR`| 一般的なプロバイダーエラーです |
+|`QUALITY_THRESHOLD_NOT_MET`| 翻訳品質が品質しきい値を下回りました |
+|`PARSE_ERROR`| ドキュメントの解析に失敗しました |

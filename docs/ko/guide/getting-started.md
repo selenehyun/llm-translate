@@ -1,5 +1,9 @@
 # 시작하기
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 ## 설치
 
 ### npm (권장)
@@ -18,7 +22,7 @@ npm run build
 npm link
 ```
 
-## 필수 요구사항
+## 사전 요구사항
 
 - Node.js 24 이상
 - 최소 하나의 LLM 제공자에 대한 API 키:
@@ -38,6 +42,7 @@ export ANTHROPIC_API_KEY=sk-ant-xxxxx
 export OPENAI_API_KEY=sk-xxxxx
 
 # For Ollama (no key needed, just ensure server is running)
+# See the Ollama guide for setup: ./ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
@@ -47,7 +52,7 @@ export OLLAMA_BASE_URL=http://localhost:11434
 llm-translate init
 ```
 
-이는 기본 설정이 포함된 `.translaterc.json` 파일을 생성합니다:
+이는 기본 설정으로 `.translaterc.json` 파일을 생성합니다:
 
 ```json
 {
@@ -71,10 +76,10 @@ llm-translate init
 
 ```bash
 # Translate a markdown file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate with source language specified
-llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
+# Using long option names
+llm-translate file docs/guide.md -o docs/guide.ja.md --source-lang en --target-lang ja
 ```
 
 ### 용어집 사용
@@ -106,20 +111,20 @@ llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
 2. 용어집과 함께 번역합니다:
 
 ```bash
-llm-translate file README.md -o README.ko.md --target ko --glossary glossary.json
+llm-translate file README.md -o README.ko.md -s en -t ko --glossary glossary.json
 ```
 
-### 배치 번역
+### 일괄 번역
 
 전체 디렉토리를 번역합니다:
 
 ```bash
-llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko --glossary glossary.json
 ```
 
-## 출력 이해하기
+## 출력 결과 이해하기
 
-번역 후 다음을 확인할 수 있습니다:
+번역 후 다음과 같은 정보를 확인할 수 있습니다:
 
 ```
 ✓ Translation complete
@@ -130,15 +135,16 @@ llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
   Duration: 3.2s
 ```
 
-- **Quality**: 최종 점수 대 품질 임계값
-- **Iterations**: Self-Refine 반복 횟수
+- **Quality**: 최종 점수 대 임계값
+- **Iterations**: 개선 사이클 수
 - **Tokens**: API 토큰 사용량
 - **Cache**: 프롬프트 캐싱 통계 (Claude만 해당)
 - **Duration**: 총 처리 시간
 
 ## 다음 단계
 
-- [프로젝트 구성](./configuration)하여 최적의 설정 적용
-- [용어집 설정](./glossary)하여 일관된 용어 사용
+- 최적 설정을 위한 [프로젝트 구성](./configuration)
+- 일관된 용어를 위한 [용어집 설정](./glossary)
 - [품질 제어](./quality-control) 및 튜닝 이해
-- [비용 최적화](./cost-optimization)하여 대규모 프로젝트 관리
+- 대규모 프로젝트를 위한 [비용 최적화](./cost-optimization)
+- 비공개 오프라인 번역을 위한 [Ollama로 로컬 실행](./ollama)

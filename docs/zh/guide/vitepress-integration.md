@@ -1,10 +1,14 @@
 # VitePress 集成
 
-llm-translate 提供辅助函数，可根据您的翻译文档结构自动生成 VitePress i18n 配置。
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
+llm-translate 提供辅助函数，可根据您翻译的文档结构自动生成 VitePress i18n 配置。
 
 ## 概述
 
-使用 `llm-translate dir` 翻译文档后，您可以使用内置的 VitePress 辅助函数为每个语言环境自动生成导航和侧边栏配置。
+使用 `llm-translate dir` 翻译文档后，您可以使用内置的 VitePress 辅助工具为每个语言环境自动生成导航和侧边栏配置。
 
 ## 安装
 
@@ -37,7 +41,7 @@ export default defineConfig({
 ```
 
 ::: tip 为什么使用绝对路径？
-VitePress 配置从项目根目录运行，因此相对路径如 `'./docs'` 可能无法正确解析。使用 `import.meta.url` 可确保路径相对于配置文件位置计算。
+VitePress 配置从项目根目录运行，因此像 `'./docs'` 这样的相对路径可能无法正确解析。使用 `import.meta.url` 确保路径相对于配置文件位置计算。
 :::
 
 这将：
@@ -162,9 +166,9 @@ export default defineConfig({
 });
 ```
 
-## 单个语言环境生成
+## 单一语言环境生成
 
-为单个语言环境生成配置：
+为单一语言环境生成配置：
 
 ```typescript
 import { generateLocale } from '@llm-translate/cli';
@@ -196,7 +200,7 @@ const locales = detectLocales('./docs', 'en');
 
 ### detectSidebarDirs
 
-自动检测应在侧边栏中显示的目录：
+自动检测应出现在侧边栏中的目录：
 
 ```typescript
 import { detectSidebarDirs } from '@llm-translate/cli';
@@ -207,12 +211,12 @@ const dirs = detectSidebarDirs('./docs');
 
 ## 标题提取
 
-辅助函数按以下顺序提取页面标题：
-1. Frontmatter 中的 `title` 字段
+辅助工具按以下顺序提取页面标题：
+1. 前置元数据 `title` 字段
 2. 文件中的第一个 `#` 标题
-3. 转换为标题大小写的文件名
+3. 转换为标题格式的文件名
 
-示例 frontmatter：
+前置元数据示例：
 ```yaml
 ---
 title: Getting Started
@@ -221,10 +225,10 @@ title: Getting Started
 
 ## 默认翻译
 
-为常见语言环境提供了内置翻译：
+为常见语言环境提供内置翻译：
 
 | 语言环境 | 标签 | 文档页脚 | 大纲 |
-|--------|------|--------|------|
+|--------|-------|------------|---------|
 | ko | 한국어 | 이전/다음 페이지 | 목차 |
 | ja | 日本語 | 前/次のページ | 目次 |
 | zh | 中文 | 上/下一页 | 目录 |
@@ -255,7 +259,7 @@ npm run docs:preview
 
 ## 注意事项
 
-- **使用绝对路径**：始终使用 `import.meta.url` 解析文档目录路径，如基本用法中所示。相对路径可能无法正确工作，因为 VitePress 从项目根目录运行。
+- **使用绝对路径**：始终使用 `import.meta.url` 解析文档目录路径，如基本用法中所示。相对路径可能无法正常工作，因为 VitePress 从项目根目录运行。
 - 语言环境目录必须使用 2 字母代码（例如 `ko` 、 `ja` 、 `zh`）
-- 辅助函数假设翻译后的文档镜像源结构
+- 辅助工具假设翻译文档镜像源结构
 - 自定义导航项（外部链接、下拉菜单）需要手动配置

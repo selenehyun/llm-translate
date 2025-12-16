@@ -1,5 +1,9 @@
 # llm-translate dir
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 디렉토리의 모든 파일을 번역합니다.
 
 ## 개요
@@ -21,17 +25,17 @@ llm-translate dir <input> <output> [options]
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`-s, --source-lang <lang>`| auto-detect | 원본 언어 코드 |
-|`-t, --target-lang <lang>`| required | 대상 언어 코드 |
+|`-s, --source-lang <lang>`| 설정 기본값 | 소스 언어 코드 |
+|`-t, --target-lang <lang>`| 필수 | 대상 언어 코드 |
 
 ### 번역 옵션
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`-g, --glossary <path>`| none | 용어집 파일 경로 |
+|`-g, --glossary <path>`| 없음 | 용어집 파일 경로 |
 |`-p, --provider <name>`|` claude`| LLM 제공자 (claude\|openai\|ollama) |
-|`-m, --model <name>`| provider default | 모델 이름 |
-|`--context <text>`| none | 번역을 위한 추가 컨텍스트 |
+|`-m, --model <name>`| 제공자 기본값 | 모델 이름 |
+|`--context <text>`| 없음 | 번역을 위한 추가 컨텍스트 |
 
 ### 품질 옵션
 
@@ -45,21 +49,21 @@ llm-translate dir <input> <output> [options]
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
 |`--include <patterns>`|`*.md,*.markdown`| 포함할 파일 패턴 (쉼표로 구분) |
-|`--exclude <patterns>`| none | 제외할 파일 패턴 (쉼표로 구분) |
+|`--exclude <patterns>`| 없음 | 제외할 파일 패턴 (쉼표로 구분) |
 
 ### 처리 옵션
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
 |`--parallel <n>`| 3 | 병렬 파일 처리 |
-|`--chunk-size <tokens>`| 1024 | 청크당 최대 토큰 |
+|`--chunk-size <tokens>`| 1024 | 청크당 최대 토큰 수 |
 |`--no-cache`| false | 번역 캐시 비활성화 |
 
 ### 출력 옵션
 
 | 옵션 | 기본값 | 설명 |
 |--------|---------|-------------|
-|`-f, --format <fmt>`| auto | 출력 형식 강제 (md\|html\|txt) |
+|`-f, --format <fmt>`| auto | 출력 형식 강제 지정 (md\|html\|txt) |
 |`--dry-run`| false | 번역될 내용 미리보기 |
 |`--json`| false | 결과를 JSON으로 출력 |
 |`-v, --verbose`| false | 상세 로깅 활성화 |
@@ -71,23 +75,23 @@ llm-translate dir <input> <output> [options]
 
 ```bash
 # Translate all markdown files
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # With glossary
-llm-translate dir ./docs ./docs-ko -t ko -g glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko -g glossary.json
 ```
 
 ### 파일 선택
 
 ```bash
 # Custom include pattern
-llm-translate dir ./docs ./docs-ko -t ko --include "**/*.md"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "**/*.md"
 
 # Multiple patterns
-llm-translate dir ./docs ./docs-ko -t ko --include "*.md,*.markdown,*.mdx"
+llm-translate dir ./docs ./docs-ko -s en -t ko --include "*.md,*.markdown,*.mdx"
 
 # Exclude certain directories
-llm-translate dir ./docs ./docs-ko -t ko \
+llm-translate dir ./docs ./docs-ko -s en -t ko \
   --exclude "node_modules/**,dist/**,drafts/**"
 ```
 
@@ -95,27 +99,27 @@ llm-translate dir ./docs ./docs-ko -t ko \
 
 ```bash
 # Process 5 files in parallel
-llm-translate dir ./docs ./docs-ko -t ko --parallel 5
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 5
 
 # Sequential processing (for rate-limited APIs)
-llm-translate dir ./docs ./docs-ko -t ko --parallel 1
+llm-translate dir ./docs ./docs-ko -s en -t ko --parallel 1
 ```
 
 ### 품질 설정
 
 ```bash
 # High quality for important docs
-llm-translate dir ./docs ./docs-ko -t ko --quality 95 --max-iterations 6
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 95 --max-iterations 6
 
 # Faster processing with lower threshold
-llm-translate dir ./docs ./docs-ko -t ko --quality 70 --max-iterations 2
+llm-translate dir ./docs ./docs-ko -s en -t ko --quality 70 --max-iterations 2
 ```
 
 ### 미리보기 모드
 
 ```bash
 # Show what would be translated
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 출력:
@@ -132,7 +136,7 @@ Total: 3 file(s)
 
 ## 출력 구조
 
-디렉토리 구조는 기본적으로 유지됩니다:
+디렉토리 구조는 기본적으로 보존됩니다:
 
 ```
 Input:                     Output:
@@ -199,21 +203,21 @@ llm-translate dir ./docs ./docs-ko -t ko --json
 ### 1. 먼저 미리보기
 
 ```bash
-llm-translate dir ./docs ./docs-ko -t ko --dry-run
+llm-translate dir ./docs ./docs-ko -s en -t ko --dry-run
 ```
 
 ### 2. 적절한 병렬 처리 사용
 
-- 속도 제한 API:`--parallel 1-2`
-- 높은 한도:`--parallel 5-10`
+- 속도 제한이 있는 API:`--parallel 1-2`
+- 높은 제한:`--parallel 5-10`
 - 로컬 (Ollama):`--parallel 1`(모델 제한)
 
 ### 3. 대규모 프로젝트 처리
 
 ```bash
 # Split by subdirectory for better control
-llm-translate dir ./docs/guide ./docs-ko/guide -t ko
-llm-translate dir ./docs/api ./docs-ko/api -t ko
+llm-translate dir ./docs/guide ./docs-ko/guide -s en -t ko
+llm-translate dir ./docs/api ./docs-ko/api -s en -t ko
 ```
 
 ### 4. 캐싱 활용
@@ -222,18 +226,18 @@ llm-translate dir ./docs/api ./docs-ko/api -t ko
 
 ```bash
 # First run: translates all
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Second run: uses cache for unchanged content
-llm-translate dir ./docs ./docs-ko -t ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 ```
 
 ### 5. 콘텐츠 유형별 품질
 
 ```bash
 # High quality for user-facing docs
-llm-translate dir ./docs/public ./docs-ko/public -t ko --quality 95
+llm-translate dir ./docs/public ./docs-ko/public -s en -t ko --quality 95
 
 # Standard quality for internal docs
-llm-translate dir ./docs/internal ./docs-ko/internal -t ko --quality 80
+llm-translate dir ./docs/internal ./docs-ko/internal -s en -t ko --quality 80
 ```

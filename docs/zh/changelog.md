@@ -1,9 +1,13 @@
 # 更新日志
 
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
 llm-translate 的所有重要更改都将记录在此文件中。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)，
-本项目遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
+此项目遵循 [语义化版本控制](https://semver.org/spec/v2.0.0.html)。
 
 ## [未发布]
 
@@ -13,12 +17,19 @@ llm-translate 的所有重要更改都将记录在此文件中。
 - 翻译结果中的缓存令牌使用情况跟踪
 - TranslationAgent 中的 `enableCaching` 选项
 - 令牌使用元数据中的 `cacheRead` 和 `cacheWrite` 字段
+- 基于 MQM（多维质量指标）的质量评估系统
+- MAPS 风格的预翻译分析步骤
+- 翻译模式支持（`--mode fast|balanced|quality`）
 
-### 变更
+### 更改
 
 -`ChatMessage.content` 现在支持可缓存的文本部分
 -`ChatResponse.usage` 包含缓存令牌指标
-- 默认模型已更新为 `claude-haiku-4-5-20251001`
+- 默认模型更新为 `claude-haiku-4-5-20251001`
+
+### 文档
+
+- 添加 Ollama 质量警告：需要 14B+ 模型才能进行可靠翻译
 
 ## [0.1.0] - 2025-12-12
 
@@ -31,7 +42,7 @@ llm-translate 的所有重要更改都将记录在此文件中。
 - 术语表管理（`llm-translate glossary`）
 - Claude、OpenAI 和 Ollama 提供商支持
 - Self-Refine 质量控制循环
-- Markdown AST 分块
+- 基于 Markdown AST 的 Chunking
 - 术语表强制执行
 - 质量阈值配置
 - 详细输出模式
@@ -46,7 +57,7 @@ llm-translate 的所有重要更改都将记录在此文件中。
 
 - CLI 参考文档
 - API 参考文档
-- 快速入门指南
+- 入门指南
 - 配置指南
 - 术语表指南
 - 质量控制指南

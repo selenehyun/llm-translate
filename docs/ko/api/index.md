@@ -1,4 +1,8 @@
-# API 참조
+# API Reference
+
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
 
 llm-translate는 Node.js 애플리케이션에서 프로그래밍 방식으로 사용할 수 있습니다.
 
@@ -49,7 +53,7 @@ await engine.translateContent(content, options);
 
 ### [TranslationAgent](./agent)
 
-Self-Refine 루프가 포함된 저수준 번역 에이전트입니다.
+Self-Refine 루프를 가진 저수준 번역 에이전트입니다.
 
 ```typescript
 const agent = new TranslationAgent({ provider, qualityThreshold });
@@ -58,7 +62,7 @@ const result = await agent.translate(request);
 
 ### [Providers](./providers)
 
-LLM 제공자 구현입니다.
+LLM 제공자 구현체입니다.
 
 ```typescript
 import {
@@ -157,11 +161,11 @@ try {
 | 코드 | 설명 |
 |------|-------------|
 |`FILE_NOT_FOUND`| 입력 파일이 존재하지 않습니다 |
-|`INVALID_CONFIG`| 구성 유효성 검사 실패 |
+|`INVALID_CONFIG`| 구성 검증에 실패했습니다 |
 |`GLOSSARY_NOT_FOUND`| 용어집 파일을 찾을 수 없습니다 |
-|`GLOSSARY_INVALID`| 용어집 유효성 검사 실패 |
+|`GLOSSARY_INVALID`| 용어집 검증에 실패했습니다 |
 |`PROVIDER_AUTH_FAILED`| API 키가 유효하지 않습니다 |
-|`PROVIDER_RATE_LIMITED`| 속도 제한 초과 |
-|`PROVIDER_ERROR`| 일반 제공자 오류 |
-|`QUALITY_THRESHOLD_NOT_MET`| 번역 품질이 품질 임계값 이하입니다 |
-|`PARSE_ERROR`| 문서 구문 분석 실패 |
+|`PROVIDER_RATE_LIMITED`| 속도 제한을 초과했습니다 |
+|`PROVIDER_ERROR`| 일반적인 제공자 오류입니다 |
+|`QUALITY_THRESHOLD_NOT_MET`| 번역 품질이 임계값 미만입니다 |
+|`PARSE_ERROR`| 문서 파싱에 실패했습니다 |

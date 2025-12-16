@@ -1,5 +1,9 @@
 # 快速开始
 
+::: info 翻译说明
+所有非英文文档均使用 Claude Sonnet 4 自动翻译。
+:::
+
 ## 安装
 
 ### npm（推荐）
@@ -8,7 +12,7 @@
 npm install -g @llm-translate/cli
 ```
 
-### 从源代码安装
+### 从源码安装
 
 ```bash
 git clone https://github.com/selenehyun/llm-translate.git
@@ -24,7 +28,7 @@ npm link
 - 至少一个 LLM 提供商的 API 密钥：
   - Anthropic (Claude)
   - OpenAI
-  - Ollama（本地，无需 API 密钥）
+  - Ollama（本地运行，无需 API 密钥）
 
 ## 配置
 
@@ -38,6 +42,7 @@ export ANTHROPIC_API_KEY=sk-ant-xxxxx
 export OPENAI_API_KEY=sk-xxxxx
 
 # For Ollama (no key needed, just ensure server is running)
+# See the Ollama guide for setup: ./ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
@@ -47,7 +52,7 @@ export OLLAMA_BASE_URL=http://localhost:11434
 llm-translate init
 ```
 
-这将创建一个 `.translaterc.json` 文件，包含默认设置：
+这将创建一个包含默认设置的 `.translaterc.json` 文件：
 
 ```json
 {
@@ -65,16 +70,16 @@ llm-translate init
 }
 ```
 
-## 你的第一次翻译
+## 第一次翻译
 
 ### 基本用法
 
 ```bash
 # Translate a markdown file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate with source language specified
-llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
+# Using long option names
+llm-translate file docs/guide.md -o docs/guide.ja.md --source-lang en --target-lang ja
 ```
 
 ### 使用术语表
@@ -106,7 +111,7 @@ llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
 2. 使用术语表进行翻译：
 
 ```bash
-llm-translate file README.md -o README.ko.md --target ko --glossary glossary.json
+llm-translate file README.md -o README.ko.md -s en -t ko --glossary glossary.json
 ```
 
 ### 批量翻译
@@ -114,12 +119,12 @@ llm-translate file README.md -o README.ko.md --target ko --glossary glossary.jso
 翻译整个目录：
 
 ```bash
-llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko --glossary glossary.json
 ```
 
-## 理解输出
+## 理解输出结果
 
-翻译后，你将看到：
+翻译完成后，您将看到：
 
 ```
 ✓ Translation complete
@@ -130,15 +135,16 @@ llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
   Duration: 3.2s
 ```
 
-- **Quality**：最终得分与阈值的对比
-- **Iterations**：优化循环次数
-- **Tokens**：API 令牌使用情况
+- **Quality**：最终得分与质量阈值的对比
+- **Iterations**：优化迭代次数
+- **Tokens**：API 令牌使用量
 - **Cache**：提示缓存统计（仅限 Claude）
 - **Duration**：总处理时间
 
-## 后续步骤
+## 下一步
 
-- [配置你的项目](./configuration)以获得最优设置
-- [设置术语表](./glossary)以确保术语一致性
-- [了解质量控制](./quality-control)和调优
-- [优化成本](./cost-optimization)以适应大型项目
+- [配置您的项目](./configuration) 以获得最佳设置
+- [设置术语表](./glossary) 确保术语一致性
+- [了解质量控制](./quality-control) 和调优
+- [优化成本](./cost-optimization) 适用于大型项目
+- [使用 Ollama 本地运行](./ollama) 进行私密的离线翻译

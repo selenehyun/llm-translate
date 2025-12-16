@@ -1,10 +1,14 @@
 # プロバイダー
 
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
 異なるAIサービス向けのLLMプロバイダー実装です。
 
 ## 概要
 
-すべてのプロバイダーは `LLMProvider` インターフェースを実装しています。
+すべてのプロバイダーは `LLMProvider` インターフェースを実装しています：
 
 ```typescript
 interface LLMProvider {
@@ -18,9 +22,9 @@ interface LLMProvider {
 }
 ```
 
-## Claude プロバイダー
+## Claudeプロバイダー
 
-推奨されるプロバイダーで、プロンプトキャッシングに完全対応しています。
+推奨プロバイダーで、プロンプトキャッシングを完全にサポートしています。
 
 ### セットアップ
 
@@ -53,7 +57,7 @@ interface ClaudeProviderConfig {
 
 ### プロンプトキャッシング
 
-Claude プロバイダーはプロンプトキャッシングを自動的にサポートしています。
+Claudeプロバイダーはプロンプトキャッシングを自動的にサポートします：
 
 ```typescript
 const response = await provider.chat({
@@ -84,7 +88,7 @@ console.log(response.usage);
 // }
 ```
 
-## OpenAI プロバイダー
+## OpenAIプロバイダー
 
 ### セットアップ
 
@@ -118,11 +122,11 @@ interface OpenAIProviderConfig {
 
 ### 自動キャッシング
 
-OpenAI は 1024 トークンを超えるプロンプトのキャッシングを自動的に処理します。
+OpenAIは1024トークンを超えるプロンプトに対して自動的にキャッシングを処理します。
 
-## Ollama プロバイダー
+## Ollamaプロバイダー
 
-ローカルの自己ホスト型モデル向けです。
+ローカルでセルフホストされたモデル用です。
 
 ### セットアップ
 
@@ -146,7 +150,7 @@ interface OllamaProviderConfig {
 
 ### 利用可能なモデル
 
-Ollama インストール環境で利用可能なすべてのモデル：
+Ollamaインストールで利用可能な任意のモデル：
 
 ```bash
 # List available models
@@ -160,9 +164,9 @@ ollama pull codellama
 
 ### 制限事項
 
-- プロンプトキャッシングはサポートされていません
-- モデルによって品質が異なります
-- コンテキストウィンドウが限定されています（モデル依存）
+- プロンプトキャッシングサポートなし
+- モデルによって品質が異なる
+- 限定的なコンテキストウィンドウ（モデル依存）
 
 ## プロバイダーインターフェース
 
@@ -264,14 +268,14 @@ class CustomProvider implements LLMProvider {
 
 ## プロバイダー選択ガイド
 
-| ユースケース | 推奨プロバイダー | モデル |
+| 用途 | 推奨プロバイダー | モデル |
 |----------|---------------------|-------|
-| コスト効率的 | Claude | Haiku 4.5 |
+| コスト効率 | Claude | Haiku 4.5 |
 | 高品質 | Claude | Sonnet 4.5 |
-| OpenAI エコシステム | OpenAI | GPT-4o |
-| 予算制約がある | OpenAI | GPT-4o-mini |
+| OpenAIエコシステム | OpenAI | GPT-4o |
+| 予算制約 | OpenAI | GPT-4o-mini |
 | プライバシー/オフライン | Ollama | Llama 3.1 |
-| エンタープライズ | Claude/OpenAI | 異なります |
+| エンタープライズ | Claude/OpenAI | 様々 |
 
 ## エラーハンドリング
 

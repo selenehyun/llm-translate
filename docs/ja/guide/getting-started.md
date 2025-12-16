@@ -1,5 +1,9 @@
 # はじめに
 
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
 ## インストール
 
 ### npm（推奨）
@@ -8,7 +12,7 @@
 npm install -g @llm-translate/cli
 ```
 
-### ソースからのインストール
+### ソースから
 
 ```bash
 git clone https://github.com/selenehyun/llm-translate.git
@@ -20,15 +24,15 @@ npm link
 
 ## 前提条件
 
-- Node.js 24 以上
-- 以下の LLM プロバイダーのうち、少なくとも 1 つの API キー：
+- Node.js 24以上
+- 少なくとも1つのLLMプロバイダーのAPIキー：
   - Anthropic（Claude）
   - OpenAI
-  - Ollama（ローカル、API キー不要）
+  - Ollama（ローカル、APIキー不要）
 
 ## 設定
 
-### 1. API キーを設定する
+### 1. APIキーの設定
 
 ```bash
 # For Claude (recommended)
@@ -38,16 +42,17 @@ export ANTHROPIC_API_KEY=sk-ant-xxxxx
 export OPENAI_API_KEY=sk-xxxxx
 
 # For Ollama (no key needed, just ensure server is running)
+# See the Ollama guide for setup: ./ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-### 2. 設定を初期化する（オプション）
+### 2. 設定の初期化（オプション）
 
 ```bash
 llm-translate init
 ```
 
-これにより、デフォルト設定を含む `.translaterc.json` ファイルが作成されます：
+これによりデフォルト設定の `.translaterc.json` ファイルが作成されます：
 
 ```json
 {
@@ -65,19 +70,19 @@ llm-translate init
 }
 ```
 
-## 最初の翻訳
+## 初回翻訳
 
 ### 基本的な使用方法
 
 ```bash
 # Translate a markdown file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
-# Translate with source language specified
-llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
+# Using long option names
+llm-translate file docs/guide.md -o docs/guide.ja.md --source-lang en --target-lang ja
 ```
 
-### 用語集を使用する
+### 用語集の使用
 
 1. `glossary.json` ファイルを作成します：
 
@@ -106,7 +111,7 @@ llm-translate file docs/guide.md -o docs/guide.ja.md --source en --target ja
 2. 用語集を使用して翻訳します：
 
 ```bash
-llm-translate file README.md -o README.ko.md --target ko --glossary glossary.json
+llm-translate file README.md -o README.ko.md -s en -t ko --glossary glossary.json
 ```
 
 ### バッチ翻訳
@@ -114,10 +119,10 @@ llm-translate file README.md -o README.ko.md --target ko --glossary glossary.jso
 ディレクトリ全体を翻訳します：
 
 ```bash
-llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
+llm-translate dir ./docs ./docs-ko -s en -t ko --glossary glossary.json
 ```
 
-## 出力結果の理解
+## 出力の理解
 
 翻訳後、以下が表示されます：
 
@@ -130,15 +135,16 @@ llm-translate dir ./docs ./docs-ko --target ko --glossary glossary.json
   Duration: 3.2s
 ```
 
-- **Quality**：最終スコア対しきい値
-- **Iterations**：改善サイクルの回数
-- **Tokens**：API トークン使用量
-- **Cache**：プロンプトキャッシング統計（Claude のみ）
-- **Duration**：合計処理時間
+- **Quality**: 最終スコア対しきい値
+- **Iterations**: 改良サイクル数
+- **Tokens**: APIトークン使用量
+- **Cache**: プロンプトキャッシング統計（Claudeのみ）
+- **Duration**: 総処理時間
 
 ## 次のステップ
 
-- [プロジェクトを設定する](./configuration)（最適な設定）
-- [用語集をセットアップする](./glossary)（用語の一貫性）
-- [品質管理を理解する](./quality-control)（チューニング）
-- [コストを最適化する](./cost-optimization)（大規模プロジェクト）
+- 最適な設定のための[プロジェクト設定](./configuration)
+- 一貫した用語のための[用語集の設定](./glossary)
+- [品質管理](./quality-control)と調整の理解
+- 大規模プロジェクトのための[コスト最適化](./cost-optimization)
+- プライベートでオフライン翻訳のための[Ollamaでのローカル実行](./ollama)

@@ -1,6 +1,10 @@
-# CLI リファレンス
+# CLIリファレンス
 
-llm-translate は、ドキュメントを翻訳するためのコマンドラインインターフェースを提供します。
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
+llm-translateは、ドキュメントを翻訳するためのコマンドラインインターフェースを提供します。
 
 ## インストール
 
@@ -10,14 +14,14 @@ npm install -g @llm-translate/cli
 
 ## グローバルオプション
 
-これらのオプションはすべてのコマンドで利用可能です。
+これらのオプションはすべてのコマンドで使用できます：
 
 | オプション | 説明 |
 |--------|-------------|
 |`--help `,`-h`| ヘルプを表示 |
 |`--version `,`-V`| バージョンを表示 |
-|`--verbose `,`-v`| 詳細出力を有効にする |
-|`--quiet `,`-q`| 非必須出力を抑制する |
+|`--verbose `,`-v`| 詳細出力を有効化 |
+|`--quiet `,`-q`| 非必須出力を抑制 |
 |`--config`| 設定ファイルへのパス |
 
 ## コマンド
@@ -58,20 +62,20 @@ llm-translate glossary <subcommand> [options]
 
 ```bash
 # Translate a file to Korean
-llm-translate file README.md -o README.ko.md --target ko
+llm-translate file README.md -o README.ko.md -s en -t ko
 
 # Translate with glossary
 llm-translate file docs/guide.md -o docs/guide.ja.md \
-  --target ja --glossary glossary.json
+  -s en -t ja --glossary glossary.json
 
 # Batch translate a directory
-llm-translate dir ./docs ./docs-ko --target ko
+llm-translate dir ./docs ./docs-ko -s en -t ko
 
 # Initialize config
 llm-translate init --provider claude
 
 # Validate glossary
-llm-translate glossary validate --glossary glossary.json
+llm-translate glossary validate glossary.json
 ```
 
 ## 終了コード
@@ -82,9 +86,9 @@ llm-translate glossary validate --glossary glossary.json
 | 1 | 一般的なエラー |
 | 2 | 無効な引数 |
 | 3 | ファイルが見つかりません |
-| 4 | 品質しきい値に達していません（厳密モード） |
-| 5 | プロバイダー/API エラー |
-| 6 | 用語集の検証に失敗しました |
+| 4 | 品質しきい値を満たしていません（厳密モード） |
+| 5 | プロバイダー/APIエラー |
+| 6 | 用語集の検証に失敗 |
 
 ## 環境変数
 
@@ -93,19 +97,15 @@ llm-translate glossary validate --glossary glossary.json
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 OPENAI_API_KEY=sk-xxxxx
 OLLAMA_BASE_URL=http://localhost:11434
-
-# Defaults
-LLM_TRANSLATE_PROVIDER=claude
-LLM_TRANSLATE_MODEL=claude-haiku-4-5-20251001
 ```
 
 ## 設定の優先順位
 
-設定は以下の順序で適用されます（後の設定が前の設定を上書きします）。
+設定は以下の順序で適用されます（後のものが前のものを上書きします）：
 
-1. ビルトインデフォルト
+1. 組み込みデフォルト
 2. 設定ファイル（`.translaterc.json`）
 3. 環境変数
-4. CLI 引数
+4. CLI引数
 
-詳細は[設定](../guide/configuration)を参照してください。
+詳細については[設定](../guide/configuration)をご覧ください。

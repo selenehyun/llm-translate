@@ -1,6 +1,10 @@
 # TranslationAgent
 
-Self-Refine アルゴリズムを実装した低レベルの翻訳エージェントです。
+::: info 翻訳について
+英語以外のドキュメントはすべてClaude Sonnet 4を使用して自動翻訳されています。
+:::
+
+Self-Refineアルゴリズムを実装した低レベル翻訳エージェントです。
 
 ## コンストラクタ
 
@@ -27,7 +31,7 @@ interface TranslationAgentOptions {
 
 ### translate
 
-Self-Refine ループを使用してコンテンツを翻訳します。
+Self-Refineループを使用してコンテンツを翻訳します。
 
 ```typescript
 const result = await agent.translate(request: TranslationRequest);
@@ -76,9 +80,9 @@ interface TranslationResult {
 }
 ```
 
-## Self-Refine アルゴリズム
+## Self-Refineアルゴリズム
 
-エージェントは以下の反復的な改善プロセスを実装しています。
+エージェントは以下の反復的改善プロセスを実装しています：
 
 ```typescript
 // Pseudocode
@@ -149,7 +153,7 @@ console.log(result.glossaryCompliance);
 // { applied: ['component', 'prop'], missed: [] }
 ```
 
-### コンテキスト付き翻訳
+### コンテキストを使用した翻訳
 
 ```typescript
 const result = await agent.translate({
@@ -165,7 +169,7 @@ const result = await agent.translate({
 });
 ```
 
-### 厳密な品質モード
+### 厳格品質モード
 
 ```typescript
 import { TranslationError, ErrorCode } from '@llm-translate/cli';
@@ -189,14 +193,14 @@ try {
 
 ## 品質評価
 
-エージェントは 4 つの基準で翻訳を評価します。
+エージェントは4つの基準で翻訳を評価します：
 
-| 基準 | ウェイト | 説明 |
+| 基準 | 重み | 説明 |
 |-----------|--------|-------------|
-| 意味的正確性 | 40% | 意味の保持 |
-| 流暢性 | 25% | 自然な言語フロー |
-| 用語集準拠 | 20% | 用語の一貫性 |
-| フォーマット保持 | 15% | 構造の維持 |
+| 意味の正確性 | 40% | 意味の保持 |
+| 流暢性 | 25% | 自然な言語の流れ |
+| 用語集の遵守 | 20% | 用語の一貫性 |
+| 形式の保持 | 15% | 構造の維持 |
 
 ### 評価結果
 
@@ -215,7 +219,7 @@ interface QualityEvaluation {
 
 ## プロンプトキャッシング
 
-`enableCaching` が true の場合（Claude ではデフォルト）、エージェントはキャッシング用にプロンプトを構造化します。
+`enableCaching` がtrue（Claudeのデフォルト）の場合、エージェントはキャッシング用にプロンプトを構造化します：
 
 ```
 ┌─────────────────────────────────┐
@@ -227,11 +231,11 @@ interface QualityEvaluation {
 └─────────────────────────────────┘
 ```
 
-これにより、マルチチャンク ドキュメントのコストを 40～50% 削減できます。
+これにより、マルチチャンクドキュメントのコストを40-50%削減できます。
 
-## 高度な使用方法: カスタム評価
+## 高度な使用法：カスタム評価
 
-デフォルトの評価ロジックをオーバーライドします。
+デフォルトの評価ロジックをオーバーライドします：
 
 ```typescript
 class CustomAgent extends TranslationAgent {

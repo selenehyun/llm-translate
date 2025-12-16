@@ -1,5 +1,9 @@
 # TranslationEngine
 
+::: info 번역
+모든 비영어 문서는 Claude Sonnet 4를 사용하여 자동으로 번역됩니다.
+:::
+
 번역 작업의 주요 진입점입니다.
 
 ## Constructor
@@ -90,7 +94,7 @@ console.log(`Output: ${result.outputPath}`);
 
 ### translateContent
 
-파일 I/O 없이 콘텐츠를 직접 번역합니다.
+콘텐츠를 직접 번역합니다 (파일 I/O 없이).
 
 ```typescript
 const result = await engine.translateContent(

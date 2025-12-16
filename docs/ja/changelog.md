@@ -1,24 +1,35 @@
 # 変更履歴
 
-llm-translate への全ての注目すべき変更は、このファイルに記録されます。
+::: info 翻訳について
+英語以外のすべてのドキュメントは、Claude Sonnet 4を使用して自動翻訳されています。
+:::
 
-このフォーマットは [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) に基づいており、
-このプロジェクトは [Semantic Versioning](https://semver.org/spec/v2.0.0.html) に準拠しています。
+llm-translateのすべての重要な変更は、このファイルに記録されます。
 
-## [Unreleased]
+形式は[Keep a Changelog](https://keepachangelog.com/en/1.0.0/)に基づいており、
+このプロジェクトは[Semantic Versioning](https://semver.org/spec/v2.0.0.html)に準拠しています。
+
+## [未リリース]
 
 ### 追加
 
-- Claude モデル向けプロンプトキャッシング対応（コスト削減率 40～50%）
-- 翻訳結果内のキャッシュトークン使用量追跡
-- TranslationAgent の `enableCaching` オプション
+- Claudeモデルのプロンプトキャッシングサポート（40-50%のコスト削減）
+- 翻訳結果でのキャッシュトークン使用量追跡
+- TranslationAgentの `enableCaching` オプション
 - トークン使用量メタデータの `cacheRead` および `cacheWrite` フィールド
+- MQM（多次元品質メトリクス）ベースの品質評価システム
+- MAPSスタイルの翻訳前分析ステップ
+- 翻訳モードサポート（`--mode fast|balanced|quality`）
 
 ### 変更
 
--`ChatMessage.content` がキャッシュ可能なテキスト部分に対応しました
--`ChatResponse.usage` にキャッシュトークンメトリクスが含まれるようになりました
-- デフォルトモデルを `claude-haiku-4-5-20251001` に更新しました
+-`ChatMessage.content` がキャッシュ可能なテキスト部分をサポート
+-`ChatResponse.usage` にキャッシュトークンメトリクスを含む
+- デフォルトモデルを `claude-haiku-4-5-20251001` に更新
+
+### ドキュメント
+
+- Ollamaの品質警告を追加：信頼性の高い翻訳には14B+モデルが必要
 
 ## [0.1.0] - 2025-12-12
 
@@ -29,9 +40,9 @@ llm-translate への全ての注目すべき変更は、このファイルに記
 - ディレクトリ一括翻訳（`llm-translate dir`）
 - 設定初期化（`llm-translate init`）
 - 用語集管理（`llm-translate glossary`）
-- Claude、OpenAI、Ollama プロバイダー対応
-- Self-Refine 品質管理ループ
-- Markdown AST ベースの Chunking
+- Claude、OpenAI、Ollamaプロバイダーサポート
+- Self-Refine品質制御ループ
+- Markdown ASTベースのChunking
 - 用語集の強制適用
 - 品質しきい値設定
 - 詳細出力モード
@@ -44,10 +55,10 @@ llm-translate への全ての注目すべき変更は、このファイルに記
 
 ### ドキュメント
 
-- CLI リファレンスドキュメント
-- API リファレンスドキュメント
+- CLIリファレンスドキュメント
+- APIリファレンスドキュメント
 - 入門ガイド
 - 設定ガイド
 - 用語集ガイド
-- 品質管理ガイド
+- 品質制御ガイド
 - コスト最適化ガイド
