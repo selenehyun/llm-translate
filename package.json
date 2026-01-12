@@ -28,9 +28,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "docs:translate": "npm run docs:translate:ko && npm run docs:translate:ja && npm run docs:translate:zh",
-    "docs:translate:ko": "node ./dist/cli/index.js dir ./docs ./docs/ko --target-lang ko --glossary ./docs/glossary.json --parallel 1 --no-cache --provider ollama --model qwen2.5:14b",
-    "docs:translate:ja": "node ./dist/cli/index.js dir ./docs ./docs/ja --target-lang ja --glossary ./docs/glossary.json --parallel 1 --no-cache --provider ollama --model qwen2.5:14b",
-    "docs:translate:zh": "node ./dist/cli/index.js dir ./docs ./docs/zh --target-lang zh --glossary ./docs/glossary.json --parallel 1 --no-cache --provider ollama --model qwen2.5:14b"
+    "docs:translate:ko": "node ./dist/cli/index.js dir ./docs ./docs/ko --target-lang ko --glossary ./docs/glossary.json --parallel 8 --no-cache",
+    "docs:translate:ja": "node ./dist/cli/index.js dir ./docs ./docs/ja --target-lang ja --glossary ./docs/glossary.json --parallel 8 --no-cache",
+    "docs:translate:zh": "node ./dist/cli/index.js dir ./docs ./docs/zh --target-lang zh --glossary ./docs/glossary.json --parallel 8 --no-cache"
   },
   "keywords": [
     "translation",
