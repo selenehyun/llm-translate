@@ -58,6 +58,14 @@ Manage glossary files.
 llm-translate glossary <subcommand> [options]
 ```
 
+### [serve](./serve)
+
+Start the translation API server.
+
+```bash
+llm-translate serve [options]
+```
+
 ## Quick Examples
 
 ```bash
@@ -76,6 +84,12 @@ llm-translate init --provider claude
 
 # Validate glossary
 llm-translate glossary validate glossary.json
+
+# Start translation API server
+llm-translate serve --port 3000
+
+# Start server with CORS and JSON logging (for Docker)
+llm-translate serve --cors --json
 ```
 
 ## Exit Codes
@@ -97,6 +111,10 @@ llm-translate glossary validate glossary.json
 ANTHROPIC_API_KEY=sk-ant-xxxxx
 OPENAI_API_KEY=sk-xxxxx
 OLLAMA_BASE_URL=http://localhost:11434
+
+# Server Mode
+TRANSLATE_PORT=3000
+TRANSLATE_API_KEY=your-api-key
 ```
 
 ## Configuration Priority

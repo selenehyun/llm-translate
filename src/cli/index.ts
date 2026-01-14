@@ -3,6 +3,7 @@ import { fileCommand } from './commands/file.js';
 import { dirCommand } from './commands/dir.js';
 import { initCommand } from './commands/init.js';
 import { glossaryCommand } from './commands/glossary.js';
+import { serveCommand } from './commands/serve.js';
 
 const program = new Command();
 
@@ -37,6 +38,7 @@ program.addCommand(fileCommand);
 program.addCommand(dirCommand);
 program.addCommand(initCommand);
 program.addCommand(glossaryCommand);
+program.addCommand(serveCommand);
 
 // ============================================================================
 // Stdin/Stdout Mode (default when no command specified)
