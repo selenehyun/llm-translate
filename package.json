@@ -18,6 +18,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "start": "node ./dist/cli/index.js",
+    "serve": "node ./dist/cli/index.js serve",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -44,6 +45,13 @@
   ],
   "author": "Tim Kang",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timkang/llm-translate.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
@@ -69,6 +77,7 @@
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
+    "semantic-release": "^24.0.0",
     "@types/node": "^22.10.1",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",
