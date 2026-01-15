@@ -47,7 +47,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/timkang/llm-translate.git"
+    "url": "https://github.com/selenehyun/llm-translate.git"
   },
   "publishConfig": {
     "access": "public"
