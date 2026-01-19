@@ -1,0 +1,99 @@
+name: Docker Publish
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    tags:
+      - "v*"
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from package.json
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate Docker tags
+        id: tags
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          IMAGE_LOWER=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          VERSION="${{ steps.pkg.outputs.version }}"
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # Tag push (v*) - stable release
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            TAGS="${IMAGE_LOWER}:${TAG_VERSION},${IMAGE_LOWER}:latest"
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            # Main branch push - stable release
+            TAGS="${IMAGE_LOWER}:${VERSION},${IMAGE_LOWER}:latest"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            # Develop branch push - alpha release
+            ALPHA_VERSION="${VERSION}-alpha.${{ github.run_number }}"
+            TAGS="${IMAGE_LOWER}:${ALPHA_VERSION},${IMAGE_LOWER}:alpha"
+          fi
+
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "Generated tags: $TAGS"
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.title=llm-translate
+            org.opencontainers.image.description=CLI-based document translation tool powered by LLMs
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.pkg.outputs.version }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
