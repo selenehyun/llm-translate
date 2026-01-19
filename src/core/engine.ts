@@ -14,6 +14,14 @@ import {
   extractTextForTranslation,
   restorePreservedSections,
 } from '../parsers/markdown.js';
+import {
+  parseHTML,
+  chunkHTMLSections,
+  parseTranslatedChunk,
+  applyHTMLTranslations,
+  getHTMLStats,
+  type HTMLTranslationMap,
+} from '../parsers/html.js';
 import { loadGlossary, resolveGlossary } from '../services/glossary.js';
 import { getProvider, getProviderConfigFromEnv } from '../providers/registry.js';
 import { logger, createTimer } from '../utils/logger.js';
@@ -158,8 +166,7 @@ export class TranslationEngine {
         result = await this.translateMarkdown(options, glossary);
         break;
       case 'html':
-        // For now, treat HTML as plain text (Phase 2 will add proper HTML support)
-        result = await this.translatePlainText(options, glossary);
+        result = await this.translateHTML(options, glossary);
         break;
       case 'text':
       default:
@@ -332,6 +339,212 @@ export class TranslationEngine {
         : 0;
 
     // Calculate cache statistics from chunk results
+    const cacheHits = chunkResults.filter((r) => r.cached).length;
+    const cacheMisses = chunkResults.filter((r) => !r.cached && r.qualityScore > 0).length;
+
+    return {
+      content: finalContent,
+      chunks: chunkResults,
+      metadata: {
+        totalTokensUsed: totalInputTokens + totalOutputTokens,
+        totalDuration: 0, // Will be set by caller
+        averageQuality,
+        provider: this.provider.name,
+        model: this.config.provider.model ?? this.provider.defaultModel,
+        totalIterations,
+        tokensUsed: {
+          input: totalInputTokens,
+          output: totalOutputTokens,
+        },
+        cache: {
+          hits: cacheHits,
+          misses: cacheMisses,
+        },
+      },
+    };
+  }
+
+  private async translateHTML(
+    options: TranslateFileOptions,
+    glossary?: ResolvedGlossary
+  ): Promise<DocumentResult> {
+    // Parse HTML and extract translatable sections
+    const document = parseHTML(options.content);
+
+    if (this.verbose) {
+      const stats = getHTMLStats(document);
+      logger.info(`Parsed HTML: ${stats.translatableSections} translatable sections, ${stats.totalTokens} tokens`);
+    }
+
+    // If no translatable sections, return original
+    if (document.sections.length === 0) {
+      return {
+        content: options.content,
+        chunks: [],
+        metadata: {
+          totalTokensUsed: 0,
+          totalDuration: 0,
+          averageQuality: 100,
+          provider: this.provider.name,
+          model: this.config.provider.model ?? this.provider.defaultModel,
+          totalIterations: 0,
+          tokensUsed: { input: 0, output: 0 },
+          cache: { hits: 0, misses: 0 },
+        },
+      };
+    }
+
+    // Chunk the sections for efficient translation
+    const chunks = chunkHTMLSections(document.sections, {
+      maxTokens: this.config.chunking.maxTokens,
+    });
+
+    if (this.verbose) {
+      logger.info(`Chunked into ${chunks.length} translation units`);
+    }
+
+    // Create translation agent
+    const agent = createTranslationAgent({
+      provider: this.provider,
+      qualityThreshold: options.qualityThreshold ?? this.config.quality.threshold,
+      maxIterations: options.maxIterations ?? this.config.quality.maxIterations,
+      verbose: this.verbose,
+      strictQuality: options.strictQuality,
+    });
+
+    // Translate each chunk
+    const allTranslations: HTMLTranslationMap = {};
+    const chunkResults: ChunkResult[] = [];
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalIterations = 0;
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      if (!chunk) continue;
+
+      if (this.verbose) {
+        logger.info(`Translating HTML chunk ${i + 1}/${chunks.length} (${chunk.sections.length} sections)...`);
+      }
+
+      // Build cache key for this chunk
+      const glossaryString = glossary
+        ? JSON.stringify(glossary.terms.map((t) => ({ s: t.source, t: t.target })))
+        : undefined;
+
+      const cacheKey: CacheKey = {
+        content: chunk.content,
+        sourceLang: options.sourceLang,
+        targetLang: options.targetLang,
+        glossary: glossaryString,
+        provider: this.provider.name,
+        model: this.config.provider.model ?? this.provider.defaultModel,
+      };
+
+      // Check cache first
+      const cacheResult = this.cache.get(cacheKey);
+      if (cacheResult.hit && cacheResult.entry) {
+        this.cacheHits++;
+        if (this.verbose) {
+          logger.info(`  ↳ Cache hit (quality: ${cacheResult.entry.qualityScore})`);
+        }
+
+        // Parse cached translation
+        const chunkTranslations = parseTranslatedChunk(chunk, cacheResult.entry.translation);
+        Object.assign(allTranslations, chunkTranslations);
+
+        chunkResults.push({
+          original: chunk.content,
+          translated: cacheResult.entry.translation,
+          startOffset: 0,
+          endOffset: chunk.content.length,
+          qualityScore: cacheResult.entry.qualityScore,
+          iterations: 0,
+          tokensUsed: { input: 0, output: 0, cacheRead: 1 },
+          cached: true,
+        });
+        continue;
+      }
+
+      this.cacheMisses++;
+
+      // Resolve style instruction
+      const resolvedStyleInstruction =
+        options.styleInstruction ?? this.config.languages.styles?.[options.targetLang];
+
+      // Build translation request
+      const request: TranslationRequest = {
+        content: chunk.content,
+        sourceLang: options.sourceLang,
+        targetLang: options.targetLang,
+        format: 'html',
+        glossary,
+        context: {
+          documentPurpose: options.context,
+          styleInstruction: resolvedStyleInstruction,
+          documentSummary: 'HTML document with structured sections. Preserve the [section-N] markers exactly as they appear. Translate only the text after each marker.',
+        },
+      };
+
+      try {
+        const result = await agent.translate(request);
+
+        // Parse translated content back into section translations
+        const chunkTranslations = parseTranslatedChunk(chunk, result.content);
+        Object.assign(allTranslations, chunkTranslations);
+
+        // Store in cache
+        this.cache.set(cacheKey, result.content, result.metadata.qualityScore);
+
+        chunkResults.push({
+          original: chunk.content,
+          translated: result.content,
+          startOffset: 0,
+          endOffset: chunk.content.length,
+          qualityScore: result.metadata.qualityScore,
+          iterations: result.metadata.iterations,
+          tokensUsed: result.metadata.tokensUsed,
+        });
+
+        // Accumulate totals
+        if (result.metadata.tokensUsed) {
+          totalInputTokens += result.metadata.tokensUsed.input;
+          totalOutputTokens += result.metadata.tokensUsed.output;
+        }
+        totalIterations += result.metadata.iterations;
+      } catch (error) {
+        logger.error(`Failed to translate HTML chunk ${i + 1}: ${error}`);
+
+        // Keep original content for failed chunks
+        for (const section of chunk.sections) {
+          allTranslations[section.id] = section.content;
+        }
+
+        chunkResults.push({
+          original: chunk.content,
+          translated: chunk.content,
+          startOffset: 0,
+          endOffset: chunk.content.length,
+          qualityScore: 0,
+          iterations: 0,
+          tokensUsed: { input: 0, output: 0 },
+        });
+      }
+    }
+
+    // Apply all translations to the HTML document
+    const finalContent = applyHTMLTranslations(document, allTranslations);
+
+    // Calculate average quality
+    const qualityScores = chunkResults
+      .filter((r) => r.qualityScore > 0)
+      .map((r) => r.qualityScore);
+    const averageQuality =
+      qualityScores.length > 0
+        ? qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length
+        : 0;
+
+    // Calculate cache statistics
     const cacheHits = chunkResults.filter((r) => r.cached).length;
     const cacheMisses = chunkResults.filter((r) => !r.cached && r.qualityScore > 0).length;
 
