@@ -52,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:3000/health/live').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 # Start server with JSON logging for container environments
-CMD ["node", "dist/cli/index.js", "serve", "--json"]
+CMD ["node", "dist/cli/index.js", "serve", "--json", "--cors", "--no-auth", "--cache-dir", "./.translate-cache/server"]
