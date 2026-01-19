@@ -108,6 +108,7 @@ export interface ServerConfig {
   enableCors: boolean;
   apiKey?: string;
   jsonLogging?: boolean;
+  cachePath?: string;
 }
 
 // ============================================================================
@@ -119,6 +120,7 @@ export interface ServerConfig {
  */
 export interface HonoVariables {
   requestId: string;
+  cachePath?: string;
 }
 
 // ============================================================================

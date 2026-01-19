@@ -35,6 +35,8 @@ export interface TranslationEngineOptions {
   verbose?: boolean;
   /** Disable caching (--no-cache mode) */
   noCache?: boolean;
+  /** External CacheManager instance (for server mode shared cache) */
+  cacheManager?: CacheManager;
 }
 
 export interface TranslateFileOptions {
@@ -83,20 +85,29 @@ export class TranslationEngine {
     }
 
     // Initialize cache
-    const cacheDisabled = options.noCache || !this.config.paths?.cache;
-    if (cacheDisabled) {
-      this.cache = createNullCacheManager();
-      if (this.verbose && options.noCache) {
-        logger.info('Cache disabled (--no-cache)');
-      }
-    } else {
-      this.cache = createCacheManager({
-        cacheDir: this.config.paths.cache!,
-        verbose: this.verbose,
-      });
+    if (options.cacheManager) {
+      // Use externally provided cache manager (e.g., server mode)
+      this.cache = options.cacheManager;
       if (this.verbose) {
         const stats = this.cache.getStats();
-        logger.info(`Cache initialized: ${stats.entries} entries`);
+        logger.info(`Using shared cache: ${stats.entries} entries`);
+      }
+    } else {
+      const cacheDisabled = options.noCache || !this.config.paths?.cache;
+      if (cacheDisabled) {
+        this.cache = createNullCacheManager();
+        if (this.verbose && options.noCache) {
+          logger.info('Cache disabled (--no-cache)');
+        }
+      } else {
+        this.cache = createCacheManager({
+          cacheDir: this.config.paths.cache!,
+          verbose: this.verbose,
+        });
+        if (this.verbose) {
+          const stats = this.cache.getStats();
+          logger.info(`Cache initialized: ${stats.entries} entries`);
+        }
       }
     }
   }

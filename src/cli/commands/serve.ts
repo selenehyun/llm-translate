@@ -11,6 +11,7 @@ export interface ServeCommandOptions {
   auth?: boolean; // Commander's --no-auth sets this to false
   cors?: boolean;
   json?: boolean;
+  cacheDir?: string;
 }
 
 // ============================================================================
@@ -28,6 +29,11 @@ export const serveCommand = new Command('serve')
   .option('--no-auth', 'Disable API key authentication')
   .option('--cors', 'Enable CORS for browser clients')
   .option('--json', 'Use JSON logging format (for containers)')
+  .option(
+    '--cache-dir <path>',
+    'Cache directory path (env: TRANSLATE_CACHE_DIR)',
+    process.env['TRANSLATE_CACHE_DIR']
+  )
   .action((options: ServeCommandOptions) => {
     const port = parseInt(options.port ?? '3000', 10);
     const host = options.host ?? '0.0.0.0';
@@ -56,5 +62,6 @@ export const serveCommand = new Command('serve')
       enableCors: options.cors ?? false,
       apiKey: process.env['TRANSLATE_API_KEY'],
       jsonLogging: options.json ?? false,
+      cachePath: options.cacheDir,
     });
   });

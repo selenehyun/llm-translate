@@ -55,6 +55,9 @@ translateRouter.post(
       // Get mode presets
       const modeConfig = MODE_PRESETS[body.mode ?? 'balanced'];
 
+      // Get cache path from context (if configured via --cache-dir)
+      const cachePath = c.get('cachePath');
+
       // Build config with overrides
       const config = {
         ...baseConfig,
@@ -73,13 +76,17 @@ translateRouter.post(
           threshold: body.qualityThreshold ?? modeConfig.qualityThreshold,
           maxIterations: body.maxIterations ?? modeConfig.maxIterations,
         },
+        paths: {
+          ...baseConfig.paths,
+          cache: cachePath,
+        },
       };
 
-      // Create engine (API mode doesn't use file cache)
+      // Create engine
       const engine = createTranslationEngine({
         config,
         verbose: false,
-        noCache: true,
+        noCache: !cachePath,
       });
 
       // Convert inline glossary to resolved format if provided

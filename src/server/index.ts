@@ -19,6 +19,14 @@ import type { ServerConfig, ErrorResponse, HonoVariables } from './types.js';
 export function createApp(options: ServerConfig) {
   const app = new Hono<{ Variables: HonoVariables }>();
 
+  // Inject cachePath into context for all routes
+  if (options.cachePath) {
+    app.use('*', async (c, next) => {
+      c.set('cachePath', options.cachePath);
+      await next();
+    });
+  }
+
   // Request logging (first middleware)
   app.use('*', createLoggerMiddleware({
     json: options.jsonLogging ?? false,
@@ -113,6 +121,7 @@ export function startServer(options: ServerConfig): ServerType {
   console.log(`  - Translate: http://${options.host}:${options.port}/translate`);
   console.log(`  - Auth: ${options.enableAuth ? 'enabled' : 'disabled'}`);
   console.log(`  - CORS: ${options.enableCors ? 'enabled' : 'disabled'}`);
+  console.log(`  - Cache: ${options.cachePath ?? 'disabled'}`);
   console.log('');
 
   // Graceful shutdown handlers
