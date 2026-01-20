@@ -106,6 +106,7 @@ export interface ServerConfig {
   host: string;
   enableAuth: boolean;
   enableCors: boolean;
+  corsOrigins?: string | string[]; // Allowed origins (undefined = '*')
   apiKey?: string;
   jsonLogging?: boolean;
   cachePath?: string;

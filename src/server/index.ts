@@ -34,8 +34,9 @@ export function createApp(options: ServerConfig) {
 
   // CORS middleware (before auth)
   if (options.enableCors) {
+    const corsOrigin = options.corsOrigins ?? '*';
     app.use('*', cors({
-      origin: '*',
+      origin: corsOrigin,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
       exposeHeaders: ['X-Request-Id'],
@@ -120,7 +121,19 @@ export function startServer(options: ServerConfig): ServerType {
   console.log(`  - Health: http://${options.host}:${options.port}/health`);
   console.log(`  - Translate: http://${options.host}:${options.port}/translate`);
   console.log(`  - Auth: ${options.enableAuth ? 'enabled' : 'disabled'}`);
-  console.log(`  - CORS: ${options.enableCors ? 'enabled' : 'disabled'}`);
+
+  // CORS logging with origin details
+  if (options.enableCors) {
+    const corsInfo = options.corsOrigins
+      ? Array.isArray(options.corsOrigins)
+        ? options.corsOrigins.join(', ')
+        : options.corsOrigins
+      : 'all origins';
+    console.log(`  - CORS: enabled (${corsInfo})`);
+  } else {
+    console.log(`  - CORS: disabled`);
+  }
+
   console.log(`  - Cache: ${options.cachePath ?? 'disabled'}`);
   console.log('');
 
