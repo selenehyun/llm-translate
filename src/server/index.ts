@@ -27,6 +27,13 @@ export function createApp(options: ServerConfig) {
     });
   }
 
+  // robots.txt - 모든 크롤링 금지
+  app.get('/robots.txt', (c) => {
+    return c.text(`User-agent: *
+Disallow: /
+`);
+  });
+
   // Request logging (first middleware)
   app.use('*', createLoggerMiddleware({
     json: options.jsonLogging ?? false,

@@ -1,0 +1,14 @@
+services:
+  llm-translate:
+    image: ghcr.io/selenehyun/llm-translate:alpha
+    container_name: llm-translate
+    restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./.translate-cache/server:/app/cache
+      - ./.translaterc.json:/app/.translaterc.json:ro
+    command: serve --json --cors "https://example.com" --no-auth --cache-dir /app/cache

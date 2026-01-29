@@ -245,6 +245,81 @@ The glossary enforces consistent translation of domain-specific terminology:
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OLLAMA_BASE_URL` | Ollama server URL (default: `http://localhost:11434`) |
 
+## Docker Deployment
+
+### Using Docker Compose (Recommended)
+
+1. Create a `.env` file with your configuration:
+
+```bash
+OPENAI_API_KEY=sk-proj-your-api-key
+UID=1000
+GID=1000
+```
+
+or
+
+```bash
+echo "OPENAI_API_KEY=sk-proj-xxx..." > .env
+echo "UID=$(id -u)" >> .env
+echo "GID=$(id -g)" >> .env
+```
+
+2. Run the server:
+
+```bash
+# Start the server
+docker compose -f docker-compose.prod.yml up -d
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Stop the server
+docker compose -f docker-compose.prod.yml down
+```
+
+3. Update to the latest image:
+
+```bash
+docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d
+```
+
+### Using Docker Run
+
+```bash
+docker run -d --name llm-translate \
+  -e OPENAI_API_KEY=your-api-key \
+  -p 3000:3000 \
+  -u $(id -u):$(id -g) \
+  -v $(pwd)/.translate-cache/server:/app/cache \
+  -v $(pwd)/.translaterc.json:/app/.translaterc.json:ro \
+  ghcr.io/selenehyun/llm-translate:alpha serve --json --cors --no-auth --cache-dir /app/cache
+```
+
+### Server Options
+
+| Option | Description |
+|--------|-------------|
+| `--port <number>` | Server port (default: 3000) |
+| `--host <string>` | Host to bind (default: 0.0.0.0) |
+| `--no-auth` | Disable API key authentication |
+| `--cors [origins]` | Enable CORS (optionally specify allowed origins, comma-separated) |
+| `--json` | Use JSON logging format |
+| `--cache-dir <path>` | Cache directory path |
+
+**CORS Examples:**
+
+```bash
+# Allow all origins
+serve --cors
+
+# Allow single origin
+serve --cors "https://example.com"
+
+# Allow multiple origins
+serve --cors "https://example.com,https://app.example.com"
+```
+
 ## Supported Formats
 
 | Format | Status | Notes |
