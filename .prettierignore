@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+*.md
+*.json
+*.yaml
+*.yml
+docs/.vitepress/cache/
+docs/.vitepress/dist/
